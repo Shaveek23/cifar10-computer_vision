@@ -1,4 +1,6 @@
+from cProfile import label
 import os
+from random import sample
 from source.utils.config_manager import ConfigManager
 import torch
 import torch.nn as nn
@@ -6,11 +8,10 @@ import ray
 from ray import tune
 from source.utils.data_loading import get_data
 from source.utils.data_loading import get_data
+import matplotlib.pyplot as plt
 
 
 class HyperparameteresTunner:
-
-
     
     def tune(self, dataset, local_dir, config, scheduler, reporter, num_samples=1, resources_per_trial={"cpu": 1, "gpu": 1}, device = "cpu"):
         
@@ -20,7 +21,7 @@ class HyperparameteresTunner:
 
         result = tune.run(
             tune.with_parameters(self.__train_validate), 
-            trial_dirname_creator=lambda trial: f"HyperparametersTunner_{config['tuning_id']}_{ConfigManager.get_now()}",
+            trial_dirname_creator=lambda trial: f"HyperparametersTunner_{config['tuning_id']}_{trial.trial_id}",
             resources_per_trial=resources_per_trial,
             config=config,
             num_samples=num_samples,
@@ -66,6 +67,7 @@ class HyperparameteresTunner:
         self.valid_iter = self.data_loaders_factory.get_valid_loader(self.config['batch_size'])
         self.test_iter = self.data_loaders_factory.get_test_loader(self.config['batch_size'])
     
+        self.__reset_history_plot()
         
         if torch.cuda.is_available():
             self.device = "cuda:0"
@@ -83,30 +85,36 @@ class HyperparameteresTunner:
         for epoch in range(self.config["epochs"]):  # loop over the dataset multiple times
             self.__train(self.train_iter, epoch)
             val_loss, val_steps, correct, total = self.__validate(self.valid_iter)
+            self.x_epoch.append((int)(epoch + 1))
             self.__save_model_checkpoint(epoch, self.config)
             tune.report(loss=(val_loss / val_steps), accuracy=correct / total)
-
+            
         print("Finished Tuning")
 
     def __train(self, train_iter, epoch):
         running_loss = 0.0
+        running_corrects = 0.0 # the number of predicted IDs that match the actual ID label.
         epoch_steps = 0
         for i, data in enumerate(train_iter, 0):
             # zero the parameter gradients
             self.optimizer.zero_grad()
 
             # forward + backward + optimize
-            loss, _, _ =  self.__forward(data)  
+            loss, outputs, labels =  self.__forward(data)  
             loss.backward()
             self.optimizer.step()
 
             # print statistics
-            running_loss += loss.item()
+            running_loss += loss.item() # loss.item() <- gives the average loss of the batch
             epoch_steps += 1
             if i % 2000 == 1999:  # print every 2000 mini-batches
                 self.__print_train_statistics(epoch, i, running_loss, epoch_steps)
-                running_loss = 0.0
-
+            
+            _, predicted = torch.max(outputs.data, 1)
+            running_corrects += (predicted == labels).sum().item()
+        
+        self.__update_loss_error_history('train', running_loss, running_corrects, train_iter.batch_size, len(train_iter.dataset.samples))
+      
     def __validate(self, valid_iter):
         val_loss = 0.0
         val_steps = 0
@@ -123,6 +131,8 @@ class HyperparameteresTunner:
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
         
+        self.__update_loss_error_history('val', val_loss, correct, valid_iter.batch_size, len(valid_iter.dataset.samples))
+
         return val_loss, val_steps, correct, total
 
     def __get_inputs(self, data):
@@ -144,6 +154,7 @@ class HyperparameteresTunner:
         with tune.checkpoint_dir(epoch) as checkpoint_dir:
             path = os.path.join(checkpoint_dir, config['tuning_id'])
             torch.save((self.net.state_dict(), self.optimizer.state_dict(), self.criterion.state_dict()), path)
+            self.__draw_and_save_curve(checkpoint_dir, epoch)
 
     def __get_objects_from_config(self, config):
         net_config = config['net']
@@ -163,8 +174,40 @@ class HyperparameteresTunner:
     
     def __get_criterion_from_config(self, type, **kwargs):
         return type(**kwargs)
+
+    def __update_loss_error_history(self, phase, running_loss, running_corrects, batch_size, samples_count):
+        
+        # average loss per image in the epoch
+        epoch_loss = running_loss * batch_size / samples_count
+       
+        # the fraction of correct ID predictions from the dataset in the epoch
+        epoch_acc = running_corrects / samples_count
+       
+        self.y_loss[phase].append(epoch_loss)
+        self.y_err[phase].append(1 - epoch_acc)
+
+    def __reset_history_plot(self):
+        self.y_loss = {}  # loss history
+        self.y_loss['train'] = []
+        self.y_loss['val'] = []
+        self.y_err = {} # err history
+        self.y_err['train'] = []
+        self.y_err['val'] = []
+        self.x_epoch = []
+
+        self.fig = plt.figure()
+        self.ax0 = self.fig.add_subplot(121, title="loss")
+        self.ax1 = self.fig.add_subplot(122, title="top1err")
+
+
+    def __draw_and_save_curve(self, path, i):
+        self.ax0.plot(self.x_epoch, self.y_loss['train'], 'bo-', label='train')
+        self.ax0.plot(self.x_epoch, self.y_loss['val'], 'ro-', label='val')
+        self.ax1.plot(self.x_epoch, self.y_err['train'], 'bo-', label='train')
+        self.ax1.plot(self.x_epoch, self.y_err['val'], 'ro-', label='val')
+        if i == 0:
+            self.ax0.legend()
+            self.ax1.legend()
+                   
+        self.fig.savefig(os.path.join(path, 'loss_curve.jpg'))
     
-
-
-
-
