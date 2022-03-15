@@ -44,10 +44,14 @@ class HyperparameteresTunner:
     def __train_validate(self, config):
 
         self.config = config
-        self.net, transform_train, transform_test, self.optimizer, self.criterion = self.__get_objects_from_config()
+        self.data_loaders_factory = self.config['data_loaders_factory']
+        self.net, self.optimizer, self.criterion = self.__get_objects_from_config()
 
-        self.train_iter, self.train_valid_iter, self.valid_iter, self.test_iter = \
-            get_data(ConfigManager.get_dataset_path('cifar10'), transform_train, transform_test, batch_size=self.config['batch_size'])
+        self.train_iter = self.data_loaders_factory.get_train_loader(self.config['batch_size'])
+        self.train_valid_iter = self.data_loaders_factory.get_train_valid_loader(self.config['batch_size'])
+        self.valid_iter = self.data_loaders_factory.get_valid_loader(self.config['batch_size'])
+        self.test_iter = self.data_loaders_factory.get_test_loader(self.config['batch_size'])
+    
         
         if torch.cuda.is_available():
             self.device = "cuda:0"
@@ -130,16 +134,16 @@ class HyperparameteresTunner:
 
     def __get_objects_from_config(self):
         net_config = self.config['net']
-        type, transform_train, transforms_test, optimizer_config, criterion_config, net_args = \
+        type, optimizer_config, criterion_config, net_args = \
             self.__unpack_net_config(**net_config)
         net = type(**net_args)
         optimizer = self.__get_optimizer_from_config(net.parameters(), **optimizer_config)
         criterion = self.__get_criterion_from_config(**criterion_config)
 
-        return net, transform_train(), transforms_test(), optimizer, criterion
+        return net, optimizer, criterion
 
-    def __unpack_net_config(self, type, transform_train, transform_test, optimizer, criterion, **kwargs):
-        return type, transform_train, transform_test, optimizer, criterion, kwargs
+    def __unpack_net_config(self, type, optimizer, criterion, **kwargs):
+        return type, optimizer, criterion, kwargs
 
     def __get_optimizer_from_config(self, params, type, **kwargs):
         return type(params, **kwargs)
