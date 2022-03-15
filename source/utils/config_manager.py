@@ -30,6 +30,10 @@ class ConfigManager():
         return os.path.join(ConfigManager.get_base_path(), ConfigManager.config['paths']['spec_paths']['data_path'])
 
     @staticmethod
+    def get_tuning_results_path():
+        return os.path.join(ConfigManager.get_base_path(), ConfigManager.config['paths']['spec_paths']['tuning_results_path'])
+
+    @staticmethod
     def get_dataset_path(dataset):
         return os.path.join(ConfigManager.get_data_path(), ConfigManager.config['paths']['spec_paths']['datasets'][dataset])
 
