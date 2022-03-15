@@ -11,6 +11,9 @@ class CNNDataLoaderFactory(DataLoaderFactory):
         self.train_transformer = transform_train
         self.test_transfomer = transform_test
 
+    def __str__(self):
+        return f'Train_transformer:{self.train_transformer.__str__()}; Test_transformer:{self.test_transfomer.__str__()}'.format(self=self)
+
     def get_train_loader(self, batch_size: int):
         self.__load_train_data(self.dataset_path, self.train_transformer)
         return torch.utils.data.DataLoader(self.train_ds, batch_size, shuffle=True, drop_last=True)

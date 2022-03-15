@@ -4,6 +4,7 @@
         "spec_paths" : {
             "data_path" : "data/",
             "checkpoints_path" : "checkpoints/",
+            "tuning_results_path" : "tuning_results/",
             "datasets": {
                 "cifar10": "cifar10-kaggle"
             }
