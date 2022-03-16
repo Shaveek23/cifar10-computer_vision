@@ -1,6 +1,6 @@
 {
     "paths": {
-        "base_path" : "C:/Users/golik/Desktop/mgr/dl/project1/cifar10-computer_vision/",
+        "base_path" : "C:\\Users\\gosia\\Desktop\\studia\\mgr_sem_1\\DL\\cifar10-computer_vision\\",
         "spec_paths" : {
             "data_path" : "data/",
             "checkpoints_path" : "checkpoints/",
