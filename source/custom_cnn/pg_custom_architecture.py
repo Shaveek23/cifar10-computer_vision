@@ -2,7 +2,9 @@ import torch                     # for all things PyTorch
 import torch.nn as nn            # for torch.nn.Module, the parent object for PyTorch models
 import torch.nn.functional as F  # for the activation function
 
-class PG_CNN(nn.Module):
+from source.custom_cnn.image_classification_base import ImageClassificationBase
+
+class PG_CNN(ImageClassificationBase):
     
     def __init__(self):
         super(PG_CNN, self).__init__()
@@ -12,11 +14,13 @@ class PG_CNN(nn.Module):
         # 1st conv layer
         self.conv1_K = 6 # number of filters (aka kernels) 
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=self.conv1_K, kernel_size=(5,5), padding=1)
+        
         # in_channels <- each picture has 3 channels (3 maps)
         # out_channels <- number of kernels, each kernel has a depth of 3 (in_channels), so in this case we apply 
         #                 6 kernels of size (5, 5, 3) on 3 maps and get 6 feature maps -
         #                 applying one kernel of size (5, 5, 3) on 3 maps (in_channels) results in 3 feature maps that are
         #                 summed up to make only one feature map, so after 6 kernels of size (5, 5, 3) we obtain exacly 6 feature maps
+
 
 
         # 2nd conv layer
