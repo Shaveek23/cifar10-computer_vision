@@ -76,8 +76,8 @@ class HyperparameteresTunner:
         
         history = []
         for epoch in range(config["epochs"]):  # loop over the dataset multiple times
-            epoch_result = epoch_step(net, train_iter, valid_iter, optimizer, epoch, device)
-            self.__save_model_checkpoint(net, optimizer, epoch, config)
+            epoch_result = epoch_step(net, train_iter, valid_iter, optimizer, criterion, epoch, device)
+            self.__save_model_checkpoint(net, optimizer, criterion, epoch, config)
             tune.report(loss=epoch_result['Loss'], accuracy=epoch_result['Accuracy'], train_loss=epoch_result['train_loss'], train_accuracy=epoch_result['train_accuracy'])
             history.append(epoch_result)
             self.__save_acc_loss_plot(history, epoch)
@@ -85,10 +85,10 @@ class HyperparameteresTunner:
         print("Finished Tuning")
 
 
-    def __save_model_checkpoint(self, net, optimizer, epoch, config):
+    def __save_model_checkpoint(self, net, optimizer, criterion, epoch, config):
         with tune.checkpoint_dir(epoch) as checkpoint_dir:
             path = os.path.join(checkpoint_dir, config['tuning_id'])
-            torch.save((net.state_dict(), optimizer.state_dict()), path)
+            torch.save((net.state_dict(), optimizer.state_dict(), criterion.state_dict()), path)
     
 
     def __save_acc_loss_plot(self, history, epoch):

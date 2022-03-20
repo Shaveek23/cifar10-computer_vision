@@ -13,27 +13,27 @@ from tqdm import tqdm
 
 
 @torch.no_grad()
-def evaluate(model, data_loader, device="cpu"):
+def evaluate(model, data_loader, loss, device="cpu"):
     model.eval()
-    outputs = [model.validation_step(batch, device) for batch in data_loader]
+    outputs = [model.validation_step(batch, loss, device) for batch in data_loader]
     return model.validation_epoch_end(outputs)
 
 
-def fit(model, train_loader, val_loader, optimizer, epochs=10, device="cpu"):
+def fit(model, train_loader, val_loader, optimizer, loss, epochs=10, device="cpu"):
     history = []
     for epoch in range(epochs):
-        epoch_result = epoch_step(model, train_loader, val_loader, optimizer, epoch, device)
+        epoch_result = epoch_step(model, train_loader, val_loader, optimizer, loss, epoch, device)
         history.append(epoch_result)
     return model, history
 
 
-def epoch_step(model, train_loader, val_loader, optimizer, epoch, device="cpu"):
+def epoch_step(model, train_loader, val_loader, optimizer, loss, epoch, device="cpu"):
 
     # Training Phase 
-    train_losses, train_accuracy = __train(model, train_loader, optimizer, device)
+    train_losses, train_accuracy = __train(model, train_loader, optimizer, loss, device)
 
     # Validation phase
-    val_result = __validate(model, val_loader, device)
+    val_result = __validate(model, val_loader, loss, device)
 
     # Saving epoch's results
     epoch_result = __get_epochs_results(val_result, train_losses, train_accuracy)
@@ -41,22 +41,22 @@ def epoch_step(model, train_loader, val_loader, optimizer, epoch, device="cpu"):
     return epoch_result
 
 
-def __train(model, train_loader, optimizer, device):
+def __train(model, train_loader, optimizer, loss, device):
     model.train()
     train_losses = []
     train_accuracy = []
     for batch in tqdm(train_loader):
-        loss,accu = model.training_step(batch, device)
-        train_losses.append(loss)
+        loss_output, accu = model.training_step(batch, loss, device)
+        train_losses.append(loss_output)
         train_accuracy.append(accu)
-        loss.backward()
+        loss_output.backward()
         optimizer.step()
         optimizer.zero_grad()
 
     return train_losses, train_accuracy
 
-def __validate(model, val_loader, device):
-    return evaluate(model, val_loader, device)
+def __validate(model, val_loader, loss, device):
+    return evaluate(model, val_loader, loss, device)
 
 
 def __get_epochs_results(val_result, train_losses, train_accuracy):
