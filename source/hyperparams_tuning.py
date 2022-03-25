@@ -10,9 +10,6 @@ class HyperparameteresTunner:
     
     def tune(self, dataset, local_dir, config, scheduler, reporter, num_samples=1, resources_per_trial={"cpu": 1, "gpu": 1}, device = "cpu"):
         
-        self.dataset = dataset
-        self.device = device
-        self.config = config
 
         result = tune.run(
             tune.with_parameters(self.__train_validate), 
@@ -43,7 +40,7 @@ class HyperparameteresTunner:
 
         best_checkpoint_dir = best_trial.checkpoint.value
         model_state, optimizer_state, criterion_state = torch.load(os.path.join(
-            best_checkpoint_dir, self.config['tuning_id']))
+            best_checkpoint_dir, config['tuning_id']))
 
         best_model.load_state_dict(model_state)
         best_optimizer.load_state_dict(optimizer_state)

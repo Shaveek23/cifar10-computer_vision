@@ -13,27 +13,32 @@ from tqdm import tqdm
 
 
 @torch.no_grad()
-def evaluate(model, data_loader, loss, device="cpu"):
+def evaluate(model, data_loader, criterion, device="cpu"):
     model.eval()
-    outputs = [model.validation_step(batch, loss, device) for batch in data_loader]
+    outputs = [model.validation_step(batch, criterion, device) for batch in data_loader]
     return model.validation_epoch_end(outputs)
 
 
-def fit(model, train_loader, val_loader, optimizer, loss, epochs=10, device="cpu"):
+def fit(model, train_loader, val_loader, optimizer, criterion, epochs=10, device="cpu"):
+    
+    if torch.cuda.device_count() > 1:
+        model = nn.DataParallel(model)
+        model.to(device)
+    
     history = []
     for epoch in range(epochs):
-        epoch_result = epoch_step(model, train_loader, val_loader, optimizer, loss, epoch, device)
+        epoch_result = epoch_step(model, train_loader, val_loader, optimizer, criterion, epoch, device)
         history.append(epoch_result)
     return model, history
 
 
-def epoch_step(model, train_loader, val_loader, optimizer, loss, epoch, device="cpu"):
+def epoch_step(model, train_loader, val_loader, optimizer, criterion, epoch, device="cpu"):
 
     # Training Phase 
-    train_losses, train_accuracy = __train(model, train_loader, optimizer, loss, device)
+    train_losses, train_accuracy = __train(model, train_loader, optimizer, criterion, device)
 
     # Validation phase
-    val_result = __validate(model, val_loader, loss, device)
+    val_result = __validate(model, val_loader, criterion, device)
 
     # Saving epoch's results
     epoch_result = __get_epochs_results(val_result, train_losses, train_accuracy)
@@ -41,22 +46,23 @@ def epoch_step(model, train_loader, val_loader, optimizer, loss, epoch, device="
     return epoch_result
 
 
-def __train(model, train_loader, optimizer, loss, device):
+def __train(model, train_loader, optimizer, criterion, device):
     model.train()
     train_losses = []
     train_accuracy = []
     for batch in tqdm(train_loader):
-        loss_output, accu = model.training_step(batch, loss, device)
-        train_losses.append(loss_output)
+        loss, accu = model.training_step(batch, criterion, device)
+        train_losses.append(loss)
         train_accuracy.append(accu)
-        loss_output.backward()
+        loss.backward()
         optimizer.step()
         optimizer.zero_grad()
 
     return train_losses, train_accuracy
 
-def __validate(model, val_loader, loss, device):
-    return evaluate(model, val_loader, loss, device)
+
+def __validate(model, val_loader, criterion, device):
+    return evaluate(model, val_loader, criterion, device)
 
 
 def __get_epochs_results(val_result, train_losses, train_accuracy):
@@ -64,6 +70,7 @@ def __get_epochs_results(val_result, train_losses, train_accuracy):
     result['train_loss'] = torch.stack(train_losses).mean().item()
     result['train_accuracy'] = torch.stack(train_accuracy).mean().item()
     return result
+
 
 def plot_result(history, path):
         Validation_accuracies = [x['Accuracy'] for x in history]

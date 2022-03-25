@@ -7,7 +7,7 @@ from source.custom_cnn.image_classification_base import ImageClassificationBase
 
 class DBN_cnn(ImageClassificationBase):
     def __init__(self, n_blocks=3, conv_k=None, drop_out=None, fc_k=128, fc_drop_out= 0.5,
-        is_fc_drop_out=True, is_batch_norm=True, is_drop_out=True, n_classes=10, n_chans=3, input_height=32, input_width=32):
+        is_fc_drop_out=True, is_fc_batch_norm=True, is_batch_norm=True, is_drop_out=True, n_classes=10, n_chans=3, input_height=32, input_width=32):
         super(DBN_cnn, self).__init__()
         
         # Set up
@@ -19,6 +19,7 @@ class DBN_cnn(ImageClassificationBase):
         self.fc2_k = self.n_classes
         self.fc_drop_out = fc_drop_out
         self.is_fc_drop_out = is_fc_drop_out
+        self.is_fc_batch_norm = is_fc_batch_norm
         self.total_size_reduction = 2 ** n_blocks
         self.input_height = input_height
         self.input_width = input_width
@@ -57,9 +58,15 @@ class DBN_cnn(ImageClassificationBase):
         # Fully connected layers
         x = x.view(-1, self.fc1.in_features)
         x = self.fc1(x)
-        x = self.fc_batch_norm(x)
+
+        if self.is_fc_batch_norm:
+            x = self.fc_batch_norm(x)
+        
         x = F.relu(x)
-        x = self.fc_drop_out(x)
+        
+        if self.is_fc_drop_out:
+            x = self.fc_drop_out(x)
+        
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
         return output
@@ -101,7 +108,6 @@ class DBN_cnn(ImageClassificationBase):
         return [n_chans, *[conv_k[i] for i in range(0, n_block - 1)]]
 
 
-
 class DBN_Block(nn.Module):
     def __init__(self, conv_k, drop_out, n_chans, is_batch_norm=True, is_drop_out=True):
         
@@ -122,6 +128,7 @@ class DBN_Block(nn.Module):
         self.batch_norm2 = nn.BatchNorm2d(num_features=self.conv2_k)
 
         self.drop_out1 = nn.Dropout2d(p=self.drop_out)
+
 
     def forward(self, x):
 
