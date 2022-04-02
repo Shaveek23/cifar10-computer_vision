@@ -12,18 +12,18 @@ def accuracy(outputs, labels):
     return torch.tensor(torch.sum(preds == labels).item() / len(preds))
 
 class ImageClassificationBase(nn.Module):
-    def training_step(self, batch, device):
+    def training_step(self, batch, criterion, device):
         images, labels = self.__get_inputs(batch, device)
         out = self(images)                  # Generate predictions
-        loss = F.cross_entropy(out, labels) # Calculate loss
+        loss = criterion(out, labels) # Calculate loss
         accu = accuracy(out,labels)
-        return loss,accu
+        return loss, accu
     
 
-    def validation_step(self, batch, device):
+    def validation_step(self, batch, criterion, device):
         images, labels = self.__get_inputs(batch, device)
         out = self(images)                    # Generate predictions
-        loss = F.cross_entropy(out, labels)   # Calculate loss
+        loss = criterion(out, labels)   # Calculate loss
         acc = accuracy(out, labels)           # Calculate accuracy
         return {'Loss': loss.detach(), 'Accuracy': acc}
         
@@ -48,6 +48,7 @@ class ImageClassificationBase(nn.Module):
         inputs, labels = inputs.to(device), labels.to(device)
         return inputs, labels
 
+
     def predict(self,data,device):
         number_to_label_dict = dict(zip(list(range(10)),
         ['airplane','automobile','bird','cat','deer',
@@ -62,3 +63,4 @@ class ImageClassificationBase(nn.Module):
         return result
 
   
+

@@ -10,9 +10,6 @@ class HyperparameteresTunner:
     
     def tune(self, dataset, local_dir, config, scheduler, reporter, num_samples=1, resources_per_trial={"cpu": 1, "gpu": 1}, device = "cpu"):
         
-        self.dataset = dataset
-        self.device = device
-        self.config = config
 
         result = tune.run(
             tune.with_parameters(self.__train_validate), 
@@ -43,7 +40,7 @@ class HyperparameteresTunner:
 
         best_checkpoint_dir = best_trial.checkpoint.value
         model_state, optimizer_state, criterion_state = torch.load(os.path.join(
-            best_checkpoint_dir, self.config['tuning_id']))
+            best_checkpoint_dir, config['tuning_id']))
 
         best_model.load_state_dict(model_state)
         best_optimizer.load_state_dict(optimizer_state)
@@ -76,8 +73,8 @@ class HyperparameteresTunner:
         
         history = []
         for epoch in range(config["epochs"]):  # loop over the dataset multiple times
-            epoch_result = epoch_step(net, train_iter, valid_iter, optimizer, epoch, device)
-            self.__save_model_checkpoint(net, optimizer, epoch, config)
+            epoch_result = epoch_step(net, train_iter, valid_iter, optimizer, criterion, epoch, device)
+            self.__save_model_checkpoint(net, optimizer, criterion, epoch, config)
             tune.report(loss=epoch_result['Loss'], accuracy=epoch_result['Accuracy'], train_loss=epoch_result['train_loss'], train_accuracy=epoch_result['train_accuracy'])
             history.append(epoch_result)
             self.__save_acc_loss_plot(history, epoch)
@@ -85,10 +82,10 @@ class HyperparameteresTunner:
         print("Finished Tuning")
 
 
-    def __save_model_checkpoint(self, net, optimizer, epoch, config):
+    def __save_model_checkpoint(self, net, optimizer, criterion, epoch, config):
         with tune.checkpoint_dir(epoch) as checkpoint_dir:
             path = os.path.join(checkpoint_dir, config['tuning_id'])
-            torch.save((net.state_dict(), optimizer.state_dict()), path)
+            torch.save((net.state_dict(), optimizer.state_dict(), criterion.state_dict()), path)
     
 
     def __save_acc_loss_plot(self, history, epoch):
