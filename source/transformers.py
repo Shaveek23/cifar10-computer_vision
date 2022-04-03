@@ -27,15 +27,30 @@ class TrainTrasformersFactory:
                                       transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)) #Normalize all the images
                                ])
 
+    @staticmethod
+    def get_transformer_cifar_auto():
+        return transforms.Compose([
+            transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10), 
+			transforms.ToTensor(), 
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        ])
+
+    @staticmethod
+    def get_transformer_only_rotation():
+        return transforms.Compose([
+            transforms.RandomRotation(degrees=30),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        ])
+
 
 class TestTransformersFactory:
 
     @staticmethod
     def get_test_transformer():
         return torchvision.transforms.Compose([
-        torchvision.transforms.ToTensor(),
-        torchvision.transforms.Normalize([0.4914, 0.4822, 0.4465],
-        [0.2023, 0.1994, 0.2010])])
+            torchvision.transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 
     def get_transformer_kaggle():
