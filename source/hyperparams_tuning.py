@@ -8,7 +8,7 @@ from source.training import epoch_step, plot_result
 
 class HyperparameteresTunner:
     
-    def tune(self, dataset, local_dir, config, scheduler, reporter, num_samples=1, resources_per_trial={"cpu": 1, "gpu": 1}, device = "cpu"):
+    def tune(self, dataset, local_dir, config, scheduler, reporter, num_samples=1, resources_per_trial={"cpu": 1, "gpu": 1}, is_resume=False, resume_name=None, device = "cpu"):
         
 
         result = tune.run(
@@ -20,7 +20,9 @@ class HyperparameteresTunner:
             scheduler=scheduler,
             progress_reporter=reporter,
             checkpoint_score_attr='accuracy',
-            local_dir=local_dir
+            local_dir=local_dir,
+            name=resume_name,
+            resume=is_resume
             )
 
         best_trial = result.get_best_trial("loss", "min", "last")
