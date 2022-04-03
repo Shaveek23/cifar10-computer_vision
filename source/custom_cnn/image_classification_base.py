@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
 import pandas as pd
-import matplotlib.pyplot as plt 
+from source.utils.label_mapper import LabelMapper
 
 
 @torch.no_grad()
@@ -50,14 +50,11 @@ class ImageClassificationBase(nn.Module):
 
 
     def predict(self,data,device):
-        number_to_label_dict = dict(zip(list(range(10)),
-        ['airplane','automobile','bird','cat','deer',
-        'dog','frog','horse','ship','truck']))
+        number_to_label_dict = LabelMapper.get_cifar10_mapper()
         result = []
         for i,batch in enumerate(tqdm(data)):
             images, _ = self.__get_inputs(batch, device)
             out = self(images)  
-            print(out)
             _, out = torch.max(out, 1)
             result.append(number_to_label_dict[out[0].item()])
         return result
