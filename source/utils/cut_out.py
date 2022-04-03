@@ -25,12 +25,12 @@ class CutOut(torch.nn.Module):
             Tensor: Image with n_holes of dimension length x length cut out of it.
         """
        # w, h = img.size
-
-        h= img.size(dim =0)
-        w = img.size(dim =1)
+        c = img.size(dim = 0)
+        h= img.size(dim =1)
+        w = img.size(dim =2)
         #convert_tensor = transforms.ToTensor()
         #img = convert_tensor(img)
-        mask = np.ones((h, w,3), np.float32)
+        mask = np.ones((c,h,w), np.float32)
 
         for n in range(self.n_holes):
             y = np.random.randint(h)
