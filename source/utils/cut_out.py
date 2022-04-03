@@ -26,8 +26,8 @@ class CutOut(torch.nn.Module):
         """
        # w, h = img.size
         c = img.size(dim = 0)
-        h= img.size(dim =1)
-        w = img.size(dim =2)
+        h = img.size(dim = 1)
+        w = img.size(dim = 2)
         #convert_tensor = transforms.ToTensor()
         #img = convert_tensor(img)
         mask = np.ones((c,h,w), np.float32)
