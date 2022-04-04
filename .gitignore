@@ -1,4 +1,7 @@
 data/
+custom_cnn/__pycache__/
+tuning_results/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -138,3 +141,4 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+config.json
