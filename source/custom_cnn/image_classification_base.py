@@ -49,14 +49,14 @@ class ImageClassificationBase(nn.Module):
         return inputs, labels
 
 
-    def predict(self,data,device):
-        number_to_label_dict = LabelMapper.get_cifar10_mapper()
+    def predict(self,data,device,mapper):
         result = []
         for i,batch in enumerate(tqdm(data)):
             images, _ = self.__get_inputs(batch, device)
             out = self(images)  
-            _, out = torch.max(out, 1)
-            result.append(number_to_label_dict[out[0].item()])
+            for element in out:
+                index = torch.argmax(element)           
+                result.append(mapper[index.item()])
         return result
 
   
