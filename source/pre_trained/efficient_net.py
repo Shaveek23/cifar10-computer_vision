@@ -4,18 +4,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
 from source.custom_cnn.image_classification_base import ImageClassificationBase
+import pretrainedmodels
 
 
-
-class PretrainedVGG16_cnn(ImageClassificationBase):
+class PretrainedEff_cnn(ImageClassificationBase):
     def __init__(self) -> None:
-        super(PretrainedVGG16_cnn,self).__init__()
+        super(PretrainedEff_cnn,self).__init__()
 
-        self.model =  models.vgg16(pretrained=True)
-        num_in_features = self.model.classifier[6].in_features
-        self.model.classifier[6] = nn.Linear(num_in_features,10)
+        self.model =  models.efficientnet_b0(pretrained=True)
         # for params in self.model.parameters():
         #   params.requires_grad = False
+    
+        self.model.classifier[1]=nn.Linear(in_features=1280,out_features= 10)
         
 
     def forward(self,x):

@@ -41,7 +41,7 @@ class TrainTrasformersFactory:
                                ])
 
 
-
+   
     @staticmethod
     def get_transformer_cifar_auto():
         return transforms.Compose([
@@ -72,6 +72,12 @@ class TrainTrasformersFactory:
 
 
 class TestTransformersFactory:
+    @staticmethod
+    def get_transformer_efficient():    
+        return torchvision.transforms.Compose([
+          transforms.Resize((256, 224)),
+        torchvision.transforms.ToTensor(),
+         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     @staticmethod
     def get_test_transformer():
