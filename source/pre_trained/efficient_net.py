@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
 from source.custom_cnn.image_classification_base import ImageClassificationBase
-import pretrainedmodels
 
 
 class PretrainedEff_cnn(ImageClassificationBase):
