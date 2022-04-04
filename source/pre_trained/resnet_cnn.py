@@ -11,15 +11,11 @@ class PretrainedRESNET_cnn(ImageClassificationBase):
     def __init__(self) -> None:
         super(PretrainedRESNET_cnn,self).__init__()
 
-        self.model =  models.resnet101(pretrained=True)
-        for params in self.model.parameters():
-          params.requires_grad = False
-        self.num_in_features = self.model.fc.in_features
-        self.num_out_features = 10
-
-        self.model.fc = nn.Linear(in_features=self.num_in_features, out_features=120)
-        self.model.fc2 = nn.Linear(120, 85)
-        self.model.fc3 = nn.Linear(85, 10)
+        self.model =  models.efficientnet_b0(pretrained=True)
+        # for params in self.model.parameters():
+        #   params.requires_grad = False
+    
+        self.model.classifier[1]=nn.Linear(in_features=1280,out_features= 10)
         
 
     def forward(self,x):

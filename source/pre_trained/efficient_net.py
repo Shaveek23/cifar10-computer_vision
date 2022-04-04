@@ -7,9 +7,9 @@ from source.custom_cnn.image_classification_base import ImageClassificationBase
 import pretrainedmodels
 
 
-class PretrainedRESNET_cnn(ImageClassificationBase):
+class PretrainedEff_cnn(ImageClassificationBase):
     def __init__(self) -> None:
-        super(PretrainedRESNET_cnn,self).__init__()
+        super(PretrainedEff_cnn,self).__init__()
 
         self.model =  models.efficientnet_b0(pretrained=True)
         # for params in self.model.parameters():
