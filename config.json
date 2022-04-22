@@ -1,12 +1,13 @@
 {
     "paths": {
-        "base_path" : "/content/drive/MyDrive/Github/cifar10-computer_vision/",
+        "base_path" : "C:\\Users\\golik\\Desktop\\mgr\\dl\\project1\\cifar10-computer_vision\\",
         "spec_paths" : {
             "data_path" : "data/",
             "checkpoints_path" : "checkpoints/",
             "tuning_results_path" : "tuning_results/",
             "datasets": {
-                "cifar10": "cifar10-kaggle"
+                "cifar10": "cifar10-kaggle",
+                "speech_recognition": "audio"
             }
         }
     },
