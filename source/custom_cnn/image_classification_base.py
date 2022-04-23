@@ -14,7 +14,9 @@ def accuracy(outputs, labels):
 class ImageClassificationBase(nn.Module):
     def training_step(self, batch, criterion, device):
         images, labels = self.__get_inputs(batch, device)
-        out = self(images)                  # Generate predictions
+        out = self(images)   # Generate predictions
+        if len(out.shape) and out.shape[1] == 1: # for 1d conv
+            out = torch.squeeze(out, dim=1)             
         loss = criterion(out, labels) # Calculate loss
         accu = accuracy(out,labels)
         return loss, accu
@@ -23,6 +25,8 @@ class ImageClassificationBase(nn.Module):
     def validation_step(self, batch, criterion, device):
         images, labels = self.__get_inputs(batch, device)
         out = self(images)                    # Generate predictions
+        if len(out.shape) and out.shape[1] == 1: # for 1d conv
+            out =  torch.squeeze(out, dim=1)   
         loss = criterion(out, labels)   # Calculate loss
         acc = accuracy(out, labels)           # Calculate accuracy
         return {'Loss': loss.detach(), 'Accuracy': acc}

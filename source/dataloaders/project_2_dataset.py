@@ -1,12 +1,12 @@
 import os
 from pathlib import Path
-from typing import Tuple, Optional, Union, Set
+from typing import Tuple, Optional, Union, Dict
 from torch.utils.data import Dataset
 
 import torch
 import torchaudio
 from torch import Tensor
-import librosa
+import numpy as np
 
 HASH_DIVIDER = "_nohash_"
 EXCEPT_FOLDER = "_background_noise_"
@@ -20,7 +20,7 @@ class Project_2_Dataset(Dataset):
             root: Union[str, Path],
             subset: Optional[str] = None,
             transform: torch.nn.Sequential = None,
-            labels: Set = None
+            labels: Dict = None
         ) -> None:
 
         assert subset is None or subset in ["training", "validation", "testing"], (
@@ -33,7 +33,7 @@ class Project_2_Dataset(Dataset):
         self._transform = transform
 
         if labels == None:
-            self._labels = set(['yes', 'no', 'up', 'down', 'left', 'right', 'on', 'off', 'stop', 'go', 'silence'])
+            self._labels = {'yes' : 0, 'no' : 1, 'up' : 2, 'down': 3, 'left': 4, 'right': 5, 'on': 6, 'off': 7, 'stop': 8, 'go': 9, 'unknown': 10, 'silence': 11 }
         else:
             self._labels = labels
     
@@ -48,7 +48,7 @@ class Project_2_Dataset(Dataset):
             self._walker = [
                 w
                 for w in walker
-                if os.path.normpath(w) not in excludes
+                if EXCEPT_FOLDER not in w and os.path.normpath(w) not in excludes
             ]
         else:
             walker = sorted(str(p) for p in Path(self._path).glob("*/*.wav"))
@@ -67,8 +67,8 @@ class Project_2_Dataset(Dataset):
         """
         fileid = self._walker[n]
 
-        waveform, sample_rate, label, speaker_id, utterance_number = self.__load_speechcommands_item(fileid, self._path)
-        label = label if label in self._labels else 'unknown'
+        waveform, sample_rate, label = self.__load_speechcommands_item(fileid, self._path)
+        label = self._labels[label] if label in self._labels else self._labels['unknown']
         
         return waveform, label
 
@@ -86,16 +86,16 @@ class Project_2_Dataset(Dataset):
         return output
 
 
-    def __load_speechcommands_item(self, filepath: str, path: str) -> Tuple[Tensor, int, str, str, int]:
+    def __load_speechcommands_item(self, filepath: str, path: str) -> Tuple[Tensor, int, str]:
         relpath = os.path.relpath(filepath, path)
         label, filename = os.path.split(relpath)
         label = label.split('\\')[1]
        
-        speaker, _ = os.path.splitext(filename)
-        speaker, _ = os.path.splitext(speaker)
+        #speaker, _ = os.path.splitext(filename)
+        #speaker, _ = os.path.splitext(speaker)
 
-        speaker_id, utterance_number = speaker.split(HASH_DIVIDER)
-        utterance_number = int(utterance_number)
+        #speaker_id, utterance_number = speaker.split(HASH_DIVIDER)
+        #utterance_number = int(utterance_number)
 
         # Load audio
         waveform, sample_rate = self.__load_wav_file(filepath)
@@ -103,7 +103,7 @@ class Project_2_Dataset(Dataset):
         if self._transform is not None:
             waveform, sample_rate = self.__transform(waveform, sample_rate)
 
-        return waveform, sample_rate, label, speaker_id, utterance_number
+        return waveform, sample_rate, label #, speaker_id, utterance_number
     
 
     def __transform(self, waveform: Tensor, sample_rate: int) -> Tuple[Tensor, int]:
@@ -114,9 +114,14 @@ class Project_2_Dataset(Dataset):
 
     def __load_wav_file(self, filepath) -> Tuple[Tensor, int]:
 
-        waveform, sample_rate = librosa.load(filepath)
-        if len(waveform) != sample_rate:
-            waveform = librosa.util.fix_length(waveform, size=sample_rate, mode='edge')
+        waveform, sample_rate = torchaudio.load(filepath)
+        waveform = waveform.cpu().detach().numpy()[0]
+        if len(waveform) < sample_rate:
+            diff = sample_rate - len(waveform)
+            left_pad = diff / 2
+            right_pad = diff / 2 if diff % 2 == 0 else diff / 2 + 1
+            waveform = np.pad(waveform, pad_width=(int(left_pad), int(right_pad)), mode='edge')
+        
         waveform = torch.tensor(waveform)
         waveform = torch.unsqueeze(waveform, 0)
         return waveform, sample_rate
