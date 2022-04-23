@@ -55,13 +55,10 @@ class ImageClassificationBase(nn.Module):
 
     def predict(self,data,device,mapper):
         result = []
-        for i,batch in enumerate(tqdm(data)):
+        for i, batch in enumerate(tqdm(data)):
             images, _ = self.__get_inputs(batch, device)
             out = self(images)  
             for element in out:
                 index = torch.argmax(element)           
                 result.append(mapper[index.item()])
         return result
-
-  
-
