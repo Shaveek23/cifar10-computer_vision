@@ -27,7 +27,7 @@ def fit(model, train_loader, val_loader, optimizer, criterion, epochs=10, device
 
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
-        model.to(device)
+    model.to(device)
     
     history = []
     for epoch in range(epochs):

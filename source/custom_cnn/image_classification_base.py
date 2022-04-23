@@ -18,7 +18,7 @@ class ImageClassificationBase(nn.Module):
         if len(out.shape) and out.shape[1] == 1: # for 1d conv
             out = torch.squeeze(out, dim=1)             
         loss = criterion(out, labels) # Calculate loss
-        accu = accuracy(out,labels)
+        accu = accuracy(out, labels)
         return loss, accu
     
 
