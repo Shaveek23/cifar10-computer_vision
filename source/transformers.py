@@ -1,7 +1,10 @@
+import torchaudio
 import torchvision
 import torchvision.transforms as transforms
 from source.utils.cut_out import CutOut
 import random
+import torch
+import torchaudio
 
 class TrainTrasformersFactory:
 
@@ -71,6 +74,11 @@ class TrainTrasformersFactory:
                                       transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))]) #Normalize all the images
 
 
+    @staticmethod
+    def get_transformer_resample():
+        return torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=8_000))
+
+
 class TestTransformersFactory:
     @staticmethod
     def get_transformer_efficient():    
@@ -112,4 +120,9 @@ class TestTransformersFactory:
                                       transforms.ToTensor(), # comvert the image to tensor so that it can work with torch
                                       transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)) #Normalize all the images
                                ])
+
+
+    @staticmethod
+    def get_transformer_resample():
+        return torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=8_000))
 
