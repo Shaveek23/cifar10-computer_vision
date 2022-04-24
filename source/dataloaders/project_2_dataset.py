@@ -116,8 +116,7 @@ class Project_2_Dataset(Dataset):
     def __load_speechcommands_item(self, filepath: str, path: str) -> Tuple[Tensor, int, str]:
         relpath = os.path.relpath(filepath, path)
         label, filename = os.path.split(relpath)
-        label = label.split('\\')[1]
-
+        label = os.path.split(label)[1]
         #speaker, _ = os.path.splitext(filename)
         #speaker, _ = os.path.splitext(speaker)
 
