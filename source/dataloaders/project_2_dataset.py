@@ -12,49 +12,77 @@ HASH_DIVIDER = "_nohash_"
 EXCEPT_FOLDER = "_background_noise_"
 
 
-
 class Project_2_Dataset(Dataset):
 
     def __init__(
-            self,
-            root: Union[str, Path],
-            subset: Optional[str] = None,
-            transform: torch.nn.Sequential = None,
-            labels: Dict = None
-        ) -> None:
+        self,
+        with_silence: False,
+        root: Union[str, Path],
+        subset: Optional[str] = None,
+        transform: torch.nn.Sequential = None,
+        labels: Dict = None,
+    ) -> None:
 
         assert subset is None or subset in ["training", "validation", "testing"], (
-            "When `subset` not None, it must take a value from " + "{'training', 'validation', 'testing'}."
+            "When `subset` not None, it must take a value from " +
+            "{'training', 'validation', 'testing'}."
         )
 
-         # Get string representation of 'root' in case Path object is passed
+        # Get string representation of 'root' in case Path object is passed
         root = os.fspath(root)
         self._path = root
         self._transform = transform
 
         if labels == None:
-            self._labels = {'yes' : 0, 'no' : 1, 'up' : 2, 'down': 3, 'left': 4, 'right': 5, 'on': 6, 'off': 7, 'stop': 8, 'go': 9, 'unknown': 10, 'silence': 11 }
+            self._labels = {'yes': 0, 'no': 1, 'up': 2, 'down': 3, 'left': 4, 'right': 5,
+                            'on': 6, 'off': 7, 'stop': 8, 'go': 9, 'unknown': 10, 'silence': 11}
         else:
             self._labels = labels
-    
 
-        if subset == "validation":
-            self._walker = self.__load_list(self._path, "validation_list.txt")
-        elif subset == "testing":
-            self._walker = self.__load_list(self._path, "testing_list.txt")
-        elif subset == "training":
-            excludes = set(self.__load_list(self._path, "validation_list.txt", "testing_list.txt"))
-            walker = sorted(str(p) for p in Path(self._path).glob("audio/*/*.wav"))
-            self._walker = [
-                w
-                for w in walker
-                if EXCEPT_FOLDER not in w and os.path.normpath(w) not in excludes
-            ]
+        if with_silence:
+            if subset == "validation":
+                self._walker = self.__load_list(
+                    self._path, "validation_list.txt", "validation_silence.txt")
+            elif subset == "testing":
+                self._walker = self.__load_list(
+                    self._path, "testing_list.txt", "test_silence.txt")
+            elif subset == "training":
+                excludes = set(self.__load_list(self._path, "validation_list.txt",
+                               "testing_list.txt", "validation_silence.txt", "test_silence.txt"))
+                walker = sorted(str(p)
+                                for p in Path(self._path).glob("audio/*/*.wav"))
+                self._walker = [
+                    w
+                    for w in walker
+                    if EXCEPT_FOLDER not in w and os.path.normpath(w) not in excludes
+                ]
+            else:
+                walker = sorted(str(p)
+                                for p in Path(self._path).glob("*/*.wav"))
+                self._walker = [
+                    w for w in walker if HASH_DIVIDER in w and EXCEPT_FOLDER not in w]
         else:
-            walker = sorted(str(p) for p in Path(self._path).glob("*/*.wav"))
-            self._walker = [w for w in walker if HASH_DIVIDER in w and EXCEPT_FOLDER not in w]
+            if subset == "validation":
+                self._walker = self.__load_list(
+                    self._path, "validation_list.txt")
+            elif subset == "testing":
+                self._walker = self.__load_list(self._path, "testing_list.txt")
+            elif subset == "training":
+                excludes = set(self.__load_list(
+                    self._path, "validation_list.txt", "testing_list.txt"))
+                walker = sorted(str(p)
+                                for p in Path(self._path).glob("audio/*/*.wav"))
+                self._walker = [
+                    w
+                    for w in walker
+                    if EXCEPT_FOLDER not in w and os.path.normpath(w) not in excludes
+                ]
+            else:
+                walker = sorted(str(p)
+                                for p in Path(self._path).glob("*/*.wav"))
+                self._walker = [
+                    w for w in walker if HASH_DIVIDER in w and EXCEPT_FOLDER not in w]
 
-        
     def __getitem__(self, n: int) -> Tuple[Tensor, int, str, str, int]:
         """Load the n-th sample from the dataset.
 
@@ -67,30 +95,28 @@ class Project_2_Dataset(Dataset):
         """
         fileid = self._walker[n]
 
-        waveform, sample_rate, label = self.__load_speechcommands_item(fileid, self._path)
+        waveform, sample_rate, label = self.__load_speechcommands_item(
+            fileid, self._path)
         label = self._labels[label] if label in self._labels else self._labels['unknown']
-        
-        return waveform, label
 
+        return waveform, label
 
     def __len__(self) -> int:
         return len(self._walker)
-
 
     def __load_list(self, root, *filenames):
         output = []
         for filename in filenames:
             filepath = os.path.join(root, filename)
             with open(filepath) as fileobj:
-                output += [os.path.normpath(os.path.join(os.path.join(root, 'audio'), line.strip())) for line in fileobj]
+                output += [os.path.normpath(os.path.join(os.path.join(
+                    root, 'audio'), line.strip())) for line in fileobj]
         return output
-
 
     def __load_speechcommands_item(self, filepath: str, path: str) -> Tuple[Tensor, int, str]:
         relpath = os.path.relpath(filepath, path)
         label, filename = os.path.split(relpath)
         label = os.path.split(label)[1]
-       
         #speaker, _ = os.path.splitext(filename)
         #speaker, _ = os.path.splitext(speaker)
 
@@ -99,18 +125,16 @@ class Project_2_Dataset(Dataset):
 
         # Load audio
         waveform, sample_rate = self.__load_wav_file(filepath)
-        
+
         if self._transform is not None:
             waveform, sample_rate = self.__transform(waveform, sample_rate)
 
-        return waveform, sample_rate, label #, speaker_id, utterance_number
-    
+        return waveform, sample_rate, label  # , speaker_id, utterance_number
 
     def __transform(self, waveform: Tensor, sample_rate: int) -> Tuple[Tensor, int]:
-        
+
         waveform = self._transform(waveform)
         return waveform, sample_rate
-
 
     def __load_wav_file(self, filepath) -> Tuple[Tensor, int]:
 
@@ -120,8 +144,9 @@ class Project_2_Dataset(Dataset):
             diff = sample_rate - len(waveform)
             left_pad = diff / 2
             right_pad = diff / 2 if diff % 2 == 0 else diff / 2 + 1
-            waveform = np.pad(waveform, pad_width=(int(left_pad), int(right_pad)), mode='edge')
-        
+            waveform = np.pad(waveform, pad_width=(
+                int(left_pad), int(right_pad)), mode='edge')
+
         waveform = torch.tensor(waveform)
         waveform = torch.unsqueeze(waveform, 0)
         return waveform, sample_rate
