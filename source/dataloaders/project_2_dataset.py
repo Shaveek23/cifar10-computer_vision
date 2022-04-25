@@ -39,49 +39,44 @@ class Project_2_Dataset(Dataset):
         else:
             self._labels = labels
 
+
+        valid_filenames = ['validation_list.txt']
+        test_filenames = []
         if with_silence:
-            if subset == "validation":
-                self._walker = self.__load_list(
-                    self._path, "validation_list.txt", "validation_silence.txt")
-            elif subset == "testing":
-                self._walker = self.__load_list(
-                    self._path, "testing_list.txt", "test_silence.txt")
-            elif subset == "training":
-                excludes = set(self.__load_list(self._path, "validation_list.txt",
-                               "testing_list.txt", "validation_silence.txt", "test_silence.txt"))
-                walker = sorted(str(p)
-                                for p in Path(self._path).glob("audio/*/*.wav"))
-                self._walker = [
-                    w
-                    for w in walker
-                    if EXCEPT_FOLDER not in w and os.path.normpath(w) not in excludes
-                ]
-            else:
-                walker = sorted(str(p)
-                                for p in Path(self._path).glob("*/*.wav"))
-                self._walker = [
-                    w for w in walker if HASH_DIVIDER in w and EXCEPT_FOLDER not in w]
+            valid_filenames += ['validation_silence.txt']
+            test_filenames += []
+        train_filenames_exlude = valid_filenames + test_filenames
+
+
+        if subset == "validation":
+            self._walker = self.__load_list(
+                self._path, *valid_filenames)
+        elif subset == "testing":
+            raise NotImplemented()
+        elif subset == "training":
+            excludes = set(self.__load_list(self._path, *train_filenames_exlude))
+            walker = sorted(str(p)
+                            for p in Path(self._path).glob("audio/*/*.wav"))
+            self._walker = [
+                w
+                for w in walker
+                if EXCEPT_FOLDER not in w
+                and os.path.normpath(w) not in excludes
+                and (with_silence or 'silence' not in w)
+            ]
         else:
-            if subset == "validation":
-                self._walker = self.__load_list(
-                    self._path, "validation_list.txt")
-            elif subset == "testing":
-                self._walker = self.__load_list(self._path, "testing_list.txt")
-            elif subset == "training":
-                excludes = set(self.__load_list(
-                    self._path, "validation_list.txt", "testing_list.txt"))
-                walker = sorted(str(p)
-                                for p in Path(self._path).glob("audio/*/*.wav"))
-                self._walker = [
-                    w
-                    for w in walker
-                    if EXCEPT_FOLDER not in w and os.path.normpath(w) not in excludes
-                ]
-            else:
-                walker = sorted(str(p)
-                                for p in Path(self._path).glob("*/*.wav"))
-                self._walker = [
-                    w for w in walker if HASH_DIVIDER in w and EXCEPT_FOLDER not in w]
+            walker = sorted(str(p)
+                            for p in Path(self._path).glob("*/*.wav"))
+            self._walker = [ 
+                w 
+                for w in walker 
+                if HASH_DIVIDER in w 
+                and EXCEPT_FOLDER not in w 
+            ]
+
+        return None
+
+       
 
     def __getitem__(self, n: int) -> Tuple[Tensor, int, str, str, int]:
         """Load the n-th sample from the dataset.
