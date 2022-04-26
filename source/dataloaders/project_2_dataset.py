@@ -31,17 +31,25 @@ class Project_2_Dataset(Dataset):
             "{'training', 'validation', 'testing'}."
         )
 
-
         # Get string representation of 'root' in case Path object is passed
         root = os.fspath(root)
         self._path = root
         self._transform = transform
 
-        if labels == None:
-            self._labels = {'yes': 0, 'no': 1, 'up': 2, 'down': 3, 'left': 4, 'right': 5,
-                            'on': 6, 'off': 7, 'stop': 8, 'go': 9, 'unknown': 10, 'silence': 11}
-        else:
+        if labels:
             self._labels = labels
+        else:
+            self._labels = {'yes': 0, 'no': 1, 'up': 2, 'down': 3, 'left': 4, 'right': 5,
+                'on': 6, 'off': 7, 'stop': 8, 'go': 9 }
+
+            next_label = 10
+            
+            if with_unknown:
+                self._labels.update({'unknown' : next_label})
+                next_label += 1
+            
+            if with_silence:
+                self._labels.update({'silence' : next_label, EXRTA_SILENCE : next_label})
 
 
         valid_filenames = ['validation_list.txt']
@@ -50,9 +58,6 @@ class Project_2_Dataset(Dataset):
             valid_filenames += ['validation_silence.txt']
             test_filenames += []
         train_filenames_exlude = valid_filenames + test_filenames
-
-        
-
 
         if subset == "validation":
             walker = self.__load_list(
