@@ -10,23 +10,27 @@ import numpy as np
 
 HASH_DIVIDER = "_nohash_"
 EXCEPT_FOLDER = "_background_noise_"
+EXRTA_SILENCE = "silence_extra"
+UNKNOWN_DIRS = ["bed", "bird", "cat", "dog", "eight", "five", "four", "happy", "house", "marvin", "nine", "one", "seven", "sheila", "six", "three", "tree", "two", "wow", "zero"]
 
 
 class Project_2_Dataset(Dataset):
 
     def __init__(
         self,
-        with_silence: False,
+        with_silence: False, # True, False, 'extra'
+        with_unknown: True,
         root: Union[str, Path],
         subset: Optional[str] = None,
         transform: torch.nn.Sequential = None,
-        labels: Dict = None,
+        labels: Dict = None
     ) -> None:
 
         assert subset is None or subset in ["training", "validation", "testing"], (
             "When `subset` not None, it must take a value from " +
             "{'training', 'validation', 'testing'}."
         )
+
 
         # Get string representation of 'root' in case Path object is passed
         root = os.fspath(root)
@@ -42,15 +46,22 @@ class Project_2_Dataset(Dataset):
 
         valid_filenames = ['validation_list.txt']
         test_filenames = []
-        if with_silence:
+        if with_silence is not False:
             valid_filenames += ['validation_silence.txt']
             test_filenames += []
         train_filenames_exlude = valid_filenames + test_filenames
 
+        
+
 
         if subset == "validation":
-            self._walker = self.__load_list(
+            walker = self.__load_list(
                 self._path, *valid_filenames)
+            self._walker = [
+                w
+                for w in walker
+                if (with_unknown or not any(unknown in w for unknown in UNKNOWN_DIRS))  
+            ]
         elif subset == "testing":
             raise NotImplemented()
         elif subset == "training":
@@ -62,7 +73,9 @@ class Project_2_Dataset(Dataset):
                 for w in walker
                 if EXCEPT_FOLDER not in w
                 and os.path.normpath(w) not in excludes
-                and (with_silence or 'silence' not in w)
+                and (with_silence or 'silence' not in w) # with_silence == (True, 'extra') -> zostają pliki z silence, w. p. p. with_silence == False -> nie ma z silence
+                and (with_silence == 'extra' or EXRTA_SILENCE not in w) # with_silence == 'extra' -> wczytuje silence_extra, w. p. p. with_silence == (False, True) -> nie ma z silence_extra
+                and (with_unknown or not any(unknown in w for unknown in UNKNOWN_DIRS))  
             ]
         else:
             walker = sorted(str(p)
