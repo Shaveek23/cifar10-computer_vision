@@ -18,7 +18,7 @@ class Project_2_Dataset(Dataset):
 
     def __init__(
         self,
-        with_silence: False, # True, False, 'extra'
+        with_silence: True, # True, False, 'extra'
         with_unknown: True,
         root: Union[str, Path],
         subset: Optional[str] = None,
