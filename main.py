@@ -33,4 +33,4 @@ train_loader = loaders_factory.get_train_loader(batch_size=batch_size)
 valid_loader = loaders_factory.get_valid_loader(batch_size=batch_size)
 
 
-fit(model, train_loader, valid_loader, optimizer, criterion, epochs=epochs, device='cpu', is_logging=True, epoch_logging=1)
+fit(model, train_loader, valid_loader, optimizer, criterion, epochs=epochs, device='cuda', is_logging=True, epoch_logging=1)
