@@ -4,6 +4,7 @@ import torch
 import torch.optim
 import torch.nn
 
+from source.pre_trained.efficient_net import PretrainedEff_cnn
 from source.training import fit
 from source.transformers import TestTransformersFactory, TrainTrasformersFactory
 from source.utils.config_manager import ConfigManager
@@ -14,7 +15,7 @@ from source.dataloaders.project_2_dataloaders_factory import Project2DataLoaderF
 batch_size = 64
 epochs = 10
 
-model = torch.load(os.path.join(ConfigManager().get_models_path(), 'PretrainedEff_cnn.pt')) 
+model = PretrainedEff_cnn(number_of_classes = 12)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
 criterion = torch.nn.CrossEntropyLoss()
 
