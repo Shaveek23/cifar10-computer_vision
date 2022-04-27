@@ -83,6 +83,9 @@ class TrainTrasformersFactory:
     @staticmethod
     def get_transformer_resample():
         return torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=8_000))
+    @staticmethod
+    def get_transformer_spectogram():
+        return torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=8_000),torchaudio.transforms.Spectrogram())
 
     @staticmethod
     def get_transformer_spectogram_eff_new():
@@ -147,3 +150,6 @@ class TestTransformersFactory:
                                    torchaudio.transforms.Spectrogram()),
                                    transforms.Resize((224, 224)),
                                    transforms.Normalize((0.5), (0.5))])
+    @staticmethod
+    def get_transformer_spectogram():
+        return torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=8_000),torchaudio.transforms.Spectrogram())

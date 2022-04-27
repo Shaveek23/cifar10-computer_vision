@@ -16,19 +16,19 @@ from source.custom_cnn.dropout_batch_norm_cnn import  DBN_cnn
 batch_size = 64
 epochs = 10
 
-model = DBN_cnn(n_blocks =3, n_classes = 12, n_chans= 1, input_width= 224, input_height= 224)
+model = DBN_cnn(n_blocks =3, n_classes = 12, n_chans= 1, input_width= 41, input_height= 201)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
 criterion = torch.nn.CrossEntropyLoss()
 
-transform_train = TrainTrasformersFactory.get_transformer_spectogram_eff_new()
-transform_test = TestTransformersFactory.get_transformer_spectogram_eff_new()
+transform_train = TrainTrasformersFactory.get_transformer_spectogram()
+transform_test = TestTransformersFactory.get_transformer_spectogram()
 
 
 # training
 dataset_name = 'speech_recognition'
 dataset_path = os.path.join(ConfigManager().get_dataset_path(dataset_name), 'train')
 
-loaders_factory = Project2DataLoaderFactory(dataset_path, transform_train=transform_train, transform_test=transform_test, with_silence=True)
+loaders_factory = Project2DataLoaderFactory(dataset_path,transform_test=transform_test, transform_train=transform_train, with_silence=True)
 
 train_loader = loaders_factory.get_train_loader(batch_size=batch_size)
 valid_loader = loaders_factory.get_valid_loader(batch_size=batch_size)
