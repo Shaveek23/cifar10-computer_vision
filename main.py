@@ -31,7 +31,7 @@ dataset_path = os.path.join(
     ConfigManager().get_dataset_path(dataset_name), 'train')
 
 loaders_factory = Project2DataLoaderFactory(
-    dataset_path, transform_test=transform_test, transform_train=transform_train, with_silence=False, with_unknown=False)
+    dataset_path, transform_test=transform_test, transform_train=transform_train, with_silence=False)
 
 train_loader = loaders_factory.get_train_loader(batch_size=batch_size)
 valid_loader = loaders_factory.get_valid_loader(batch_size=batch_size)
