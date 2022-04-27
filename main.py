@@ -9,13 +9,14 @@ from source.training import fit
 from source.transformers import TestTransformersFactory, TrainTrasformersFactory
 from source.utils.config_manager import ConfigManager
 from source.dataloaders.project_2_dataloaders_factory import Project2DataLoaderFactory
+from source.custom_cnn.dropout_batch_norm_cnn import  DBN_cnn
 
 
 # definitions
 batch_size = 64
 epochs = 10
 
-model = PretrainedEff_cnn(number_of_classes = 12)
+model = DBN_cnn(n_blocks =3, n_classes = 12, n_chans= 1, input_width= 224, input_height= 224)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
 criterion = torch.nn.CrossEntropyLoss()
 

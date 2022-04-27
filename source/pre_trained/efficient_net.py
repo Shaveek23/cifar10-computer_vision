@@ -4,15 +4,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
 from source.custom_cnn.image_classification_base import ImageClassificationBase
-import os
-from source.utils.config_manager import ConfigManager
 
 
 class PretrainedEff_cnn(ImageClassificationBase):
     def __init__(self,number_of_classes) -> None:
         super(PretrainedEff_cnn,self).__init__()
 
-        self.model =  torch.load(os.path.join(ConfigManager().get_models_path(), 'PretrainedEff_cnn.pt')) 
+        self.model =  models.efficientnet_b0(pretrained=True) 
         conv_weight = self.model.features[0][0].weight
         self.model.features[0][0].in_channels = 1  
         self.model.features[0][0].weight = torch.nn.Parameter(conv_weight.sum(dim = 1, keepdim=True))
