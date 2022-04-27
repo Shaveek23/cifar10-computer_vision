@@ -15,7 +15,7 @@ from source.dataloaders.project_2_dataloaders_factory import Project2DataLoaderF
 batch_size = 64
 epochs = 10
 
-model = PretrainedEff_cnn(number_of_classes = 12)
+model = torch.load(os.path.join(ConfigManager().get_models_path(), 'PretrainedEff_cnn.pt')) 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
 criterion = torch.nn.CrossEntropyLoss()
 

@@ -55,6 +55,11 @@ class ConfigManager():
 
 
     @staticmethod
+    def get_models_path():
+         return os.path.join(ConfigManager.get_base_path(), ConfigManager.config['paths']['spec_paths']['models_path'])
+
+
+    @staticmethod
     def is_eden():
         return ConfigManager.config['EDEN']
 
