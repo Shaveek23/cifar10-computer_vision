@@ -9,15 +9,15 @@ from source.training import fit
 from source.transformers import TestTransformersFactory, TrainTrasformersFactory
 from source.utils.config_manager import ConfigManager
 from source.dataloaders.project_2_dataloaders_factory import Project2DataLoaderFactory
-from source.custom_cnn.dropout_batch_norm_cnn import DBN_cnn
+from source.custom_cnn.conv2d import CNNSpectrogram
 
 
 # definitions
 batch_size = 64
 epochs = 10
 
-model = DBN_cnn(n_blocks=3, n_classes=12, n_chans=1,
-                input_width=41, input_height=201)
+#model = DBN_cnn(n_blocks =3, n_classes = 12, n_chans= 1, input_width= 41, input_height= 201)
+model = CNNSpectrogram(n_input=1, n_output=12,image_height=201, image_width=41)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
 criterion = torch.nn.CrossEntropyLoss()
 
