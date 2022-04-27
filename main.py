@@ -4,7 +4,6 @@ import torch
 import torch.optim
 import torch.nn
 
-from source.pre_trained.efficient_net import PretrainedEff_cnn
 from source.training import fit
 from source.transformers import TestTransformersFactory, TrainTrasformersFactory
 from source.utils.config_manager import ConfigManager
