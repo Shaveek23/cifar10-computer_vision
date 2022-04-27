@@ -6,6 +6,7 @@
             "data_path": "data/",
             "data_path_eden" : "/raid/shared/pgolik/data/",
             "checkpoints_path" : "checkpoints/",
+            "checkpoints_path_eden": "/raid/shared/pgolik/checkpoints/",
             "tuning_results_path" : "tuning_results/",
             "datasets": {
                 "cifar10": "cifar10-kaggle",

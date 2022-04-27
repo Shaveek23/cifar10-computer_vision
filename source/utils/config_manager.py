@@ -49,6 +49,8 @@ class ConfigManager():
 
     @staticmethod
     def get_checkpoints_path():
+        if ConfigManager.config['EDEN']:
+            return ConfigManager.config['paths']['spec_paths']['checkpoints_path_eden']
         return os.path.join(ConfigManager.get_base_path(), ConfigManager.config['paths']['spec_paths']['checkpoints_path'])
 
 
