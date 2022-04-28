@@ -6,7 +6,6 @@ import os
 
 from source.dataloaders.project_2_dataset import Project_2_Dataset
 
-
 class Project2DataLoaderFactory(DataLoaderFactory):
 
     def __init__(self, dataset_path, transform_train: torch.nn.Sequential = None, transform_test: torch.nn.Sequential = None, with_silence: Boolean = True, with_unknown: Boolean = True):
