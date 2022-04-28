@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchaudio
 import sys
-
+import numpy as np
 from source.custom_cnn.image_classification_base import ImageClassificationBase
 
 
@@ -23,7 +23,7 @@ class CNNSpectrogram(ImageClassificationBase):
 
         # linear layers
         #TODO: zparametryzowac
-        self.linear1 = nn.Linear(in_features=6144, out_features=128)
+        self.linear1 = nn.Linear(in_features=1024, out_features=128)
         self.linear2 = nn.Linear(in_features=128, out_features=n_output)
 
         # the rest layers
@@ -43,5 +43,5 @@ class CNNSpectrogram(ImageClassificationBase):
         x = self.flatten(x)
         x = self.linear1(x)
         x = self.dropout2(x)
-        x = F.softmax(self.linear2(x), dim = 1)
+        x = F.log_softmax(self.linear2(x), dim = 1)
         return x
