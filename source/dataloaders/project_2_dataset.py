@@ -26,14 +26,19 @@ class Project_2_Dataset(Dataset):
         labels: Dict = None
     ) -> None:
 
-        assert subset is None or subset in ["training", "validation", "testing"], (
-            "When `subset` not None, it must take a value from " +
+        assert  subset in ["training", "validation", "testing"], (
+            " `subset` must take a value from " +
             "{'training', 'validation', 'testing'}."
         )
 
+        self.subset = subset
         # Get string representation of 'root' in case Path object is passed
         root = os.fspath(root)
-        self._path = root
+        if subset in ["training", "validation"]:
+            self._path = os.path.join(root, 'train')
+        elif subset == 'testing':
+            self._path = os.path.join(root, 'test')
+
         self._transform = transform
 
         if labels:
@@ -67,8 +72,11 @@ class Project_2_Dataset(Dataset):
                 for w in walker
                 if (with_unknown or not any(unknown in w for unknown in UNKNOWN_DIRS))  
             ]
+
         elif subset == "testing":
-            raise NotImplemented()
+             self._walker = sorted(str(p)
+                            for p in Path(self._path).glob("audio/*.wav"))
+
         elif subset == "training":
             excludes = set(self.__load_list(self._path, *train_filenames_exlude))
             walker = sorted(str(p)
@@ -82,21 +90,11 @@ class Project_2_Dataset(Dataset):
                 and (with_silence == 'extra' or EXRTA_SILENCE not in w) # with_silence == 'extra' -> wczytuje silence_extra, w. p. p. with_silence == (False, True) -> nie ma z silence_extra
                 and (with_unknown or not any(unknown in w for unknown in UNKNOWN_DIRS))  
             ]
-        else:
-            walker = sorted(str(p)
-                            for p in Path(self._path).glob("*/*.wav"))
-            self._walker = [ 
-                w 
-                for w in walker 
-                if HASH_DIVIDER in w 
-                and EXCEPT_FOLDER not in w 
-            ]
-
         return None
 
        
 
-    def __getitem__(self, n: int) -> Tuple[Tensor, int, str, str, int]:
+    def __getitem__(self, n: int) -> Tuple[Tensor, int]:
         """Load the n-th sample from the dataset.
 
         Args:
@@ -108,14 +106,15 @@ class Project_2_Dataset(Dataset):
         """
         fileid = self._walker[n]
 
-        waveform, sample_rate, label = self.__load_speechcommands_item(
-            fileid, self._path)
-        label = self._labels[label] if label in self._labels else self._labels['unknown']
+
+        waveform, sample_rate, label = self.__load_speechcommands_item(fileid, self._path)
 
         return waveform, label
 
+
     def __len__(self) -> int:
         return len(self._walker)
+
 
     def __load_list(self, root, *filenames):
         output = []
@@ -126,15 +125,21 @@ class Project_2_Dataset(Dataset):
                     root, 'audio'), line.strip())) for line in fileobj]
         return output
 
-    def __load_speechcommands_item(self, filepath: str, path: str) -> Tuple[Tensor, int, str]:
-        relpath = os.path.relpath(filepath, path)
-        label, filename = os.path.split(relpath)
-        label = os.path.split(label)[1]
-        #speaker, _ = os.path.splitext(filename)
-        #speaker, _ = os.path.splitext(speaker)
 
-        #speaker_id, utterance_number = speaker.split(HASH_DIVIDER)
-        #utterance_number = int(utterance_number)
+    def __load_speechcommands_item(self, filepath: str, path: str) -> Tuple[Tensor, int, int]:
+        
+        if self.subset == 'testing':
+            label = 0
+        else:
+            relpath = os.path.relpath(filepath, path)
+            label, filename = os.path.split(relpath)
+            label = os.path.split(label)[1]
+            label = self._labels[label] if label in self._labels else self._labels['unknown']
+            #speaker, _ = os.path.splitext(filename)
+            #speaker, _ = os.path.splitext(speaker)
+
+            #speaker_id, utterance_number = speaker.split(HASH_DIVIDER)
+            #utterance_number = int(utterance_number)
 
         # Load audio
         waveform, sample_rate = self.__load_wav_file(filepath)
@@ -144,10 +149,12 @@ class Project_2_Dataset(Dataset):
 
         return waveform, sample_rate, label  # , speaker_id, utterance_number
 
+
     def __transform(self, waveform: Tensor, sample_rate: int) -> Tuple[Tensor, int]:
 
         waveform = self._transform(waveform)
         return waveform, sample_rate
+
 
     def __load_wav_file(self, filepath) -> Tuple[Tensor, int]:
 
