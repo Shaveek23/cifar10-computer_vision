@@ -19,7 +19,7 @@ batch_size = 64
 epochs = 50
 
 #model = DBN_cnn(n_blocks =3, n_classes = 12, n_chans= 1, input_width= 41, input_height= 201)
-model = NN(input_size=32,no_classes=12, hidden_size=20,num_layers =2,batch_size = batch_size)
+model = NN(input_size=32,no_classes=12, hidden_size=20,num_layers =2,batch_size = batch_size, device="cuda")
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0001)
 criterion = torch.nn.CrossEntropyLoss()
 
