@@ -30,7 +30,7 @@ transform_test = TestTransformersFactory.get_transformer_spectogram()
 # training
 dataset_name = 'speech_recognition'
 dataset_path = os.path.join(
-    ConfigManager().get_dataset_path(dataset_name), 'train')
+    ConfigManager().get_dataset_path(dataset_name))
 
 loaders_factory = Project2DataLoaderFactory(
     dataset_path, transform_test=transform_test, transform_train=transform_train)
