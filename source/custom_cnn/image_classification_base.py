@@ -53,12 +53,17 @@ class ImageClassificationBase(nn.Module):
         return inputs, labels
 
 
-    def predict(self,data,device,mapper):
+    @torch.no_grad()
+    def predict(self, data, device):
+        self.eval()
         result = []
         for i, batch in enumerate(tqdm(data)):
             images, _ = self.__get_inputs(batch, device)
             out = self(images)  
-            for element in out:
-                index = torch.argmax(element)           
-                result.append(mapper[index.item()])
+
+            if len(out.shape) and out.shape[1] == 1: # for 1d conv
+                out = torch.squeeze(out, dim=1) 
+
+            _, preds = torch.max(out, dim=1)
+            result += preds.tolist()
         return result

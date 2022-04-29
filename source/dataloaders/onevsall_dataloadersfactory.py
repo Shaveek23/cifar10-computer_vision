@@ -51,7 +51,7 @@ class OneVsAllDataLoadersFactory(DataLoaderFactory):
         self.__load_valid_data(
             self.dataset_path, self.test_transfomer)
 
-        return torch.utils.data.DataLoader(self.valid_ds, batch_size, shuffle=False, drop_last=True)
+        return torch.utils.data.DataLoader(self.valid_ds, batch_size, shuffle=False, drop_last=False)
 
 
     def get_test_loader(self, batch_size: int):
