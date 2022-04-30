@@ -5,6 +5,7 @@ from source.utils.cut_out import CutOut
 import random
 import torch
 import torchaudio
+import numpy as np
 
 
 class TrainTrasformersFactory:
@@ -81,12 +82,26 @@ class TrainTrasformersFactory:
                                    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])  # Normalize all the images
 
     @staticmethod
-    def get_transformer_resample():
-        return torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=8_000))
+    def get_transformer_resample(sample_rate=8000):
+        return torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=sample_rate))
+
     @staticmethod
-    def get_transformer_spectogram():
-        return transforms.Compose([torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=8_000),
-        torchaudio.transforms.Spectrogram()),transforms.Resize((32,32)) ] )
+    def get_transformer_resample_aug(sample_rate=8000):
+        return torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=sample_rate),
+                                   torchaudio.transforms.PitchShift(
+                                       sample_rate, n_steps=np.random.random_integers(1, 5)),
+                                   torchaudio.transforms.Fade(np.random.randint(0, sample_rate/2), np.random.randint(sample_rate/2, sample_rate)))
+
+    @staticmethod
+    def get_transformer_spectogram(new_freq=8000, spect_size=32):
+        return transforms.Compose([torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=new_freq),
+                                                       torchaudio.transforms.Spectrogram()), transforms.Resize((spect_size, spect_size))])
+
+    @staticmethod
+    def get_transformer_spectogram_aug(new_freq=8000, spect_size=32):
+        return transforms.Compose([torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=new_freq),
+                                                       torchaudio.transforms.Spectrogram(),
+                                   torchaudio.transforms.TimeMasking(time_mask_param=10), torchaudio.transforms.FrequencyMasking(freq_mask_param=50), transforms.Resize((spect_size, spect_size)))])
 
     @staticmethod
     def get_transformer_spectogram_eff_new():
@@ -142,8 +157,8 @@ class TestTransformersFactory:
                                    ])
 
     @staticmethod
-    def get_transformer_resample():
-        return torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=8_000))
+    def get_transformer_resample(sample_rate=8000):
+        return torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=sample_rate))
 
     @staticmethod
     def get_transformer_spectogram_eff_new():
@@ -151,7 +166,8 @@ class TestTransformersFactory:
                                    torchaudio.transforms.Spectrogram()),
                                    transforms.Resize((224, 224)),
                                    transforms.Normalize((0.5), (0.5))])
+
     @staticmethod
-    def get_transformer_spectogram():
-        return transforms.Compose([torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=8_000),
-        torchaudio.transforms.Spectrogram()),transforms.Resize((32,32)) ] )
+    def get_transformer_spectogram(new_freq=8000, spect_size=32):
+        return transforms.Compose([torch.nn.Sequential(torchaudio.transforms.Resample(new_freq=new_freq),
+                                                       torchaudio.transforms.Spectrogram()), transforms.Resize((spect_size, spect_size))])
