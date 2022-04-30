@@ -22,7 +22,7 @@ def run_training(dropout_inner, dropout_outter, hidden_size, withAug):
 
     #model = DBN_cnn(n_blocks =3, n_classes = 12, n_chans= 1, input_width= 41, input_height= 201)
     model = NN(input_size=32, no_classes=12, hidden_size=hidden_size, num_layers=2,
-               batch_size=batch_size, device="cpu", dropout_inner=dropout_inner, dropout_outter=dropout_outter)
+               batch_size=batch_size, device="cuda", dropout_inner=dropout_inner, dropout_outter=dropout_outter)
     optimizer = torch.optim.Adam(
         model.parameters(), lr=0.001, weight_decay=0.0001)
     criterion = torch.nn.CrossEntropyLoss()
@@ -45,7 +45,7 @@ def run_training(dropout_inner, dropout_outter, hidden_size, withAug):
     valid_loader = loaders_factory.get_valid_loader(batch_size=batch_size)
 
     fit(model, train_loader, valid_loader, optimizer, criterion,
-        epochs=epochs, device='cpu', is_logging=True, epoch_logging=1)
+        epochs=epochs, device='cuda', is_logging=True, epoch_logging=1)
 
 
 if __name__ == '__main__':
