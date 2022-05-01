@@ -1,4 +1,5 @@
 from cProfile import label
+import json
 import os
 from random import sample
 
@@ -139,3 +140,5 @@ def __log_result(history, model, optimizer, criterion, epoch, checkpoint_path):
     plot_result(history, checkpoint_path, epoch)
     cache_path = os.path.join(checkpoint_path, 'cache.pt')
     torch.save((model.state_dict(), optimizer.state_dict(), criterion.state_dict()), cache_path)
+    with open(os.path.join(checkpoint_path, 'results.json'), 'w') as file:
+        file.write(json.dumps(history))
