@@ -5,19 +5,22 @@ import torch
 import torchaudio
 import os
 import numpy as np
-
+import csv
 from source.dataloaders.project_2_dataset import Project_2_Dataset
+from source.utils.config_manager import ConfigManager
 
 
 UNKNOWN_DIRS = ["bed", "bird", "cat", "dog", "eight", "five", "four", "happy", "house", "marvin", "nine", "one", "seven", "sheila", "six", "three", "tree", "two", "wow", "zero"]
 
 class OneVsAllDataLoadersFactory(DataLoaderFactory):
 
-    def __init__(self, dataset_path, transform_train: torch.nn.Sequential = None, transform_test: torch.nn.Sequential = None, one='silence'):
+    def __init__(self, dataset_path, transform_train: torch.nn.Sequential = None, transform_test: torch.nn.Sequential = None, one='silence', from_file_path=None):
         super().__init__(dataset_path)
         self.train_transformer = transform_train
         self.test_transfomer = transform_test
         self.one = one
+        self.from_file_path = from_file_path
+
 
         if one == 'silence':
             self.with_silence = 'extra'
@@ -73,7 +76,7 @@ class OneVsAllDataLoadersFactory(DataLoaderFactory):
 
     def __load_test_data(self, data_dir: str, transform_test: torch.nn.Sequential):
         self.test_ds = Project_2_Dataset(
-           True, True, data_dir, 'testing', transform=transform_test)
+           True, True, data_dir, 'testing', transform=transform_test, from_file_path=self.from_file_path)
 
 
     def __get_sampler_to_balance_classes(self, samples_filenames):
@@ -91,3 +94,19 @@ class OneVsAllDataLoadersFactory(DataLoaderFactory):
         sample_weights = weights[zeros_for_one_class]
         sampler = torch.utils.data.sampler.WeightedRandomSampler(sample_weights, len(sample_weights))
         return sampler
+
+    
+    def save_one_class_predictions(self, loader: torch.utils.data.DataLoader, predictions: torch.tensor, filepath=None):
+
+        if filepath is None:
+            abs_path = ConfigManager().get_prelabels_path()
+            filename = f'{ConfigManager().get_now()}_onevsall.txt'
+            filepath = os.path.join(abs_path, filename)
+
+        files_ones = np.array(loader.dataset._walker)[np.where(np.array(predictions) == 1)[0]]
+        
+        with open(filepath, 'a') as f:
+            for file_name in files_ones:
+                f.write(f'{file_name}\n')
+
+        return filepath

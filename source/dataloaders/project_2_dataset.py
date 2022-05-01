@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from typing import Tuple, Optional, Union, Dict
+from xmlrpc.client import Boolean
 from torch.utils.data import Dataset
 
 import torch
@@ -18,12 +19,13 @@ class Project_2_Dataset(Dataset):
 
     def __init__(
         self,
-        with_silence: True, # True, False, 'extra'
-        with_unknown: True,
-        root: Union[str, Path],
+        with_silence: Boolean = True, # True, False, 'extra'
+        with_unknown: Boolean = True,
+        root: Union[str, Path] = None,
         subset: Optional[str] = None,
         transform: torch.nn.Sequential = None,
-        labels: Dict = None
+        labels: Dict = None,
+        from_file_path = None
     ) -> None:
 
         assert  subset in ["training", "validation", "testing"], (
@@ -31,7 +33,10 @@ class Project_2_Dataset(Dataset):
             "{'training', 'validation', 'testing'}."
         )
 
+        assert not (from_file_path is not None and subset != 'testing'), ('from_file_path is meant for testing only')
+
         self.subset = subset
+        self.from_file_path = from_file_path
         # Get string representation of 'root' in case Path object is passed
         root = os.fspath(root)
         if subset in ["training", "validation"]:
@@ -58,11 +63,10 @@ class Project_2_Dataset(Dataset):
 
 
         valid_filenames = ['validation_list.txt']
-        test_filenames = []
         if with_silence is not False:
             valid_filenames += ['validation_silence.txt']
-            test_filenames += []
-        train_filenames_exlude = valid_filenames + test_filenames
+
+        train_filenames_exlude = valid_filenames
 
         if subset == "validation":
             walker = self.__load_list(
@@ -74,8 +78,19 @@ class Project_2_Dataset(Dataset):
             ]
 
         elif subset == "testing":
-             self._walker = sorted(str(p)
+            walker = sorted(str(p)
                             for p in Path(self._path).glob("audio/*.wav"))
+
+            rest_files = []
+            if self.from_file_path is not None and os.path.isfile(self.from_file_path) :
+                with open(self.from_file_path) as fileobj:
+                    rest_files += [line.strip('\n') for line in fileobj]
+                rest_files = set(rest_files)
+            self._walker = [
+                w
+                for w in walker
+                if self.from_file_path is None or os.path.normpath(w) not in rest_files
+            ]
 
         elif subset == "training":
             excludes = set(self.__load_list(self._path, *train_filenames_exlude))
@@ -105,7 +120,6 @@ class Project_2_Dataset(Dataset):
             ``(waveform, sample_rate, label, speaker_id, utterance_number)``
         """
         fileid = self._walker[n]
-
 
         waveform, sample_rate, label = self.__load_speechcommands_item(fileid, self._path)
 

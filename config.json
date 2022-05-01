@@ -6,8 +6,9 @@
             "data_path": "data/",
             "data_path_eden" : "/raid/shared/pgolik/data/",
             "checkpoints_path" : "checkpoints/",
-            "checkpoints_path_eden": "/raid/shared/pgolik/checkpoints/",
+            "checkpoints_path_eden": "checkpoints/",
             "models_path": "models/",
+            "prelabels": "audio/test/one_vs_all/",
             "datasets": {
                 "cifar10": "cifar10-kaggle",
                 "speech_recognition": "audio"

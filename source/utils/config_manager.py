@@ -58,6 +58,10 @@ class ConfigManager():
     def get_models_path():
          return os.path.join(ConfigManager.get_base_path(), ConfigManager.config['paths']['spec_paths']['models_path'])
 
+    @staticmethod
+    def get_prelabels_path():
+        return os.path.join(ConfigManager.get_data_path(), ConfigManager.config['paths']['spec_paths']['prelabels'])
+
 
     @staticmethod
     def is_eden():
