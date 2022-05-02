@@ -15,7 +15,7 @@ class Project2DataLoaderFactory(DataLoaderFactory):
         self.test_transfomer = transform_test
         self.with_silence = with_silence
         self.with_unknown = with_unknown
-        self.is_unknown_balanced = is_balanced
+        self.is_balanced = is_balanced
 
 
     def __str__(self):
