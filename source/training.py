@@ -22,9 +22,9 @@ def evaluate(model, data_loader, criterion, device="cpu"):
     return model.validation_epoch_end(outputs)
 
 
-def fit(model, train_loader, val_loader, optimizer, criterion, epochs=10, device="cpu", is_logging=False, epoch_logging=5):
+def fit(model, train_loader, val_loader, optimizer, criterion, epochs=10, device="cpu", is_logging=False, epoch_logging=5, trial_name=None):
     
-    checkpoint_path = __generate_checkpoint_path()
+    checkpoint_path = __generate_checkpoint_path(trial_name)
 
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
@@ -128,10 +128,13 @@ def plot_result(history, path, epoch=None):
         fig.savefig(os.path.join(path, file_name))
 
 
-def __generate_checkpoint_path():
+def __generate_checkpoint_path(trial_name=None):
     base_path = ConfigManager().get_checkpoints_path()
-    now = f'result_{ConfigManager().get_now()}'
-    return os.path.join(base_path, now)
+    if trial_name is not None:
+        dir_name = f'result_{trial_name}_{ConfigManager().get_now()}'
+    else:
+        dir_name = f'result_{ConfigManager().get_now()}'
+    return os.path.join(base_path, dir_name)
 
 def __log_result(history, model, optimizer, criterion, epoch, checkpoint_path):
     checkpoint_path = os.path.join(checkpoint_path, f'epoch_{epoch + 1}')
