@@ -14,18 +14,16 @@ dataset_path = os.path.join(ConfigManager().get_dataset_path(dataset_name))
 
 # Monolithic approach (one model)
 def train_one_vs_one(n_classes, model, optimizer, criterion, train_transformer, test_transform, batch_size, n_epochs, device,
- is_logging=True, epoch_logging=1, is_unknown_train_balanced=False):
+ is_logging=True, epoch_logging=1, is_balanced=False):
 
     if n_classes == 10: # only 10 known
         loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=False, with_unknown=False)
     
     elif n_classes == 11: # 10 known + unknown
-        print("Warning: training dataset is not balanced.")
-        loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=False, with_unknown=True)
+        loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=False, with_unknown=True, is_balanced=is_balanced)
     
-    elif n_classes == 12: # 10 known + silence + unknown
-        print("Warning: training dataset is not balanced.")
-        loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=True, with_unknown=True)
+    elif n_classes == 12: # 10 known + silence + unknown 
+        loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=True, with_unknown=True, is_balanced=is_balanced)
    
     elif n_classes == 31: # all possible classes (including silence) distinguished
         loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=True, with_unknown=True)
