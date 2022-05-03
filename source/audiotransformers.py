@@ -18,7 +18,7 @@ class AudioTrainTrasformersFactory:
 
     @staticmethod
     def get_train_transformer_spectogram():
-        return transforms.Compose(transforms_audio.Resample(new_freq=8_000), transforms_audio.Spectrogram())
+        return transforms.Compose([transforms_audio.Resample(new_freq=8_000), transforms_audio.Spectrogram()])
 
 
     @staticmethod  
@@ -30,7 +30,7 @@ class AudioTestTrasformersFactory:
 
     @staticmethod
     def get_test_transformer_spectogram():
-        return transforms.Compose(transforms_audio.Resample(new_freq=8_000), transforms_audio.Spectrogram())
+        return transforms.Compose([transforms_audio.Resample(new_freq=8_000), transforms_audio.Spectrogram()])
 
     @staticmethod 
     def get_transformer_spectogram_aug(new_freq=8000):
