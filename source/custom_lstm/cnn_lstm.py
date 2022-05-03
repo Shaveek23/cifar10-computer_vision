@@ -7,9 +7,9 @@ import sys
 
 from source.custom_lstm.LSTMBase import LSTMBase
 class NN(LSTMBase):
-    def __init__(self,input_size=1,no_classes=12, hidden_size=11,num_layers =1,batch_size = 64,dropout_inner = 0,dropout_outter = 0, device = "cpu") -> None:
+    def __init__(self,no_classes=12, hidden_size=11,num_layers =1,batch_size = 64,dropout_inner = 0,dropout_outter = 0, device = "cpu") -> None:
         super().__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers,batch_first = True, dropout = dropout_inner)
+        self.lstm = nn.LSTM(32, hidden_size, num_layers,batch_first = True, dropout = dropout_inner)
         self.hidden = self._init_hidden(batch_size, hidden_size, 1, num_layers,device)
         self.linear1 = nn.Linear(hidden_size, no_classes)
         self.conv1 = nn.Conv2d(in_channels=1,out_channels=16, kernel_size=5,stride = 2,padding = 2)
