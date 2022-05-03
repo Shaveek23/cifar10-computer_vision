@@ -90,7 +90,7 @@ def train_unknown_vs_known(model_binary_classifier, optimizer, criterion, train_
     train_loader = svr_factory.get_train_loader(batch_size)
     valid_loader = svr_factory.get_valid_loader(batch_size)
 
-    fit(model_binary_classifier, train_loader, valid_loader, optimizer, criterion, n_epochs, device, is_logging=True, epoch_logging=1, trail_name=trial_name)
+    fit(model_binary_classifier, train_loader, valid_loader, optimizer, criterion, n_epochs, device, is_logging=True, epoch_logging=1, trial_name=trial_name)
 
 
 def predict_known_vs_unknown(model_binary_classifier, test_transform, batch_size, device, silence_vs_rest_path) -> str:
