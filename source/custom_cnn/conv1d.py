@@ -9,7 +9,10 @@ from source.custom_cnn.image_classification_base import ImageClassificationBase
 
 class M5(ImageClassificationBase):
     def __init__(self, n_input=1, n_output=11, stride=16, n_channel=32):
-        super().__init__()
+       
+        binary_classification = True if n_output==2 else False
+        super(M5, self).__init__(binary_classification=binary_classification, pos_label=0)
+        
         self.conv1 = nn.Conv1d(n_input, n_channel, kernel_size=80, stride=stride)
         self.bn1 = nn.BatchNorm1d(n_channel)
         self.pool1 = nn.MaxPool1d(4)
@@ -23,6 +26,7 @@ class M5(ImageClassificationBase):
         self.bn4 = nn.BatchNorm1d(2 * n_channel)
         self.pool4 = nn.MaxPool1d(4)
         self.fc1 = nn.Linear(2 * n_channel, n_output)
+
 
     def forward(self, x):
         x = self.conv1(x)

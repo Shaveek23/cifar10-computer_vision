@@ -94,19 +94,3 @@ class OneVsAllDataLoadersFactory(DataLoaderFactory):
         sample_weights = weights[zeros_for_one_class]
         sampler = torch.utils.data.sampler.WeightedRandomSampler(sample_weights, len(sample_weights))
         return sampler
-
-    
-    def save_one_class_predictions(self, loader: torch.utils.data.DataLoader, predictions: torch.tensor, filepath=None):
-
-        if filepath is None:
-            abs_path = ConfigManager().get_prelabels_path()
-            filename = f'{ConfigManager().get_now()}_onevsall.txt'
-            filepath = os.path.join(abs_path, filename)
-
-        files_ones = np.array(loader.dataset._walker)[np.where(np.array(predictions) == 1)[0]]
-        
-        with open(filepath, 'a') as f:
-            for file_name in files_ones:
-                f.write(f'{file_name}\n')
-
-        return filepath

@@ -14,19 +14,16 @@ dataset_path = os.path.join(ConfigManager().get_dataset_path(dataset_name))
 
 # Monolithic approach (one model)
 def train_one_vs_one(n_classes, model, optimizer, criterion, train_transformer, test_transform, batch_size, n_epochs, device,
-    with_silence=True, with_unknown=True, is_logging=True, epoch_logging=1):
+ is_logging=True, epoch_logging=1, is_balanced=False, trial_name=None):
 
     if n_classes == 10: # only 10 known
         loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=False, with_unknown=False)
     
-    elif n_classes == 11: # 10 known + silence or unknown (not both)
-        if with_silence and with_unknown:
-            print('There are 11 classes, but with_silence and with_unknown are both true -> 12 classes.')
-            return
-        loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=with_silence, with_unknown=with_unknown)
+    elif n_classes == 11: # 10 known + unknown
+        loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=False, with_unknown=True, is_balanced=is_balanced)
     
-    elif n_classes == 12: # 10 known + silence + unknown
-        loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=True, with_unknown=True)
+    elif n_classes == 12: # 10 known + silence + unknown 
+        loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=True, with_unknown=True, is_balanced=is_balanced)
    
     elif n_classes == 31: # all possible classes (including silence) distinguished
         loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=True, with_unknown=True)
@@ -41,7 +38,7 @@ def train_one_vs_one(n_classes, model, optimizer, criterion, train_transformer, 
 
     train_loader = loaders_factory.get_train_loader(batch_size)
     valid_loader = loaders_factory.get_valid_loader(batch_size)
-    fit(model, train_loader, valid_loader, optimizer, criterion, n_epochs, device, is_logging=is_logging, epoch_logging=epoch_logging)
+    fit(model, train_loader, valid_loader, optimizer, criterion, n_epochs, device, is_logging=is_logging, epoch_logging=epoch_logging, trial_name=trial_name)
 
 
 def predict_one_vs_one(model, test_transform, batch_size, device, one_vs_rest_path=None):
@@ -59,15 +56,15 @@ def predict_one_vs_one(model, test_transform, batch_size, device, one_vs_rest_pa
 
 
 # SILENCE VS REST
-def train_silence_vs_rest(model_binary_classifier, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device):
-    ''' Binary classification between silence (basic + extra) and rest (known and unknown)'''
+def train_silence_vs_rest(model_binary_classifier, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device, trial_name=None):
+    ''' Binary classification between silence (basic + extra): 0 and rest (known and unknown): 1'''
   
     svr_factory = OneVsAllDataLoadersFactory(dataset_path, train_transform, test_transform, one='silence')
 
     train_loader = svr_factory.get_train_loader(batch_size)
     valid_loader = svr_factory.get_valid_loader(batch_size)
 
-    fit(model_binary_classifier, train_loader, valid_loader, optimizer, criterion, n_epochs, device, is_logging=True, epoch_logging=1)
+    fit(model_binary_classifier, train_loader, valid_loader, optimizer, criterion, n_epochs, device, is_logging=True, epoch_logging=1, trial_name=trial_name)
 
 
 def predict_silence_vs_rest(model_binary_classifier, test_transform, batch_size, device) -> str:
@@ -85,15 +82,15 @@ def predict_silence_vs_rest(model_binary_classifier, test_transform, batch_size,
 
 
 # UNKNOWN VS KNOWN
-def train_unknown_vs_known(model_binary_classifier, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device):
-    ''' Binary classification between known and unknown (no silence)'''
+def train_unknown_vs_known(model_binary_classifier, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device, trial_name=None):
+    ''' Binary classification between known and unknown (no silence), 0 - unknown, 1 - known'''
     
     svr_factory = OneVsAllDataLoadersFactory(dataset_path, train_transform, test_transform, one='unknown')
 
     train_loader = svr_factory.get_train_loader(batch_size)
     valid_loader = svr_factory.get_valid_loader(batch_size)
 
-    fit(model_binary_classifier, train_loader, valid_loader, optimizer, criterion, n_epochs, device, is_logging=True, epoch_logging=1)
+    fit(model_binary_classifier, train_loader, valid_loader, optimizer, criterion, n_epochs, device, is_logging=True, epoch_logging=1, trail_name=trial_name)
 
 
 def predict_known_vs_unknown(model_binary_classifier, test_transform, batch_size, device, silence_vs_rest_path) -> str:
