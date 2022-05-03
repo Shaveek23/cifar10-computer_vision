@@ -14,21 +14,21 @@ def accuracy(outputs, labels):
 
 
 @torch.no_grad()
-def recall(outputs, labels, pos_label=0):
+def recall(outputs, labels, pos_label=0, device='cpu'):
     _, preds = torch.max(outputs, dim=1)
-    return torch.tensor(recall_score(labels, preds, pos_label=pos_label, zero_division=1))  
+    return torch.tensor(recall_score(labels.cpu(), preds.cpu(), pos_label=pos_label, zero_division=1)).to(device)  
 
 
 @torch.no_grad()
-def precision(outputs, labels, pos_label=0):
+def precision(outputs, labels, pos_label=0, device='cpu'):
     _, preds = torch.max(outputs, dim=1)
-    return torch.tensor(precision_score(labels, preds, pos_label=pos_label, zero_division=1)) 
+    return torch.tensor(precision_score(labels.cpu(), preds.cpu(), pos_label=pos_label, zero_division=1)).to(device)  
 
 
 @torch.no_grad()
-def F1Score(outputs, labels, pos_label=0):
+def F1Score(outputs, labels, pos_label=0, device='cpu'):
     _, preds = torch.max(outputs, dim=1)
-    return torch.tensor(f1_score(labels, preds, pos_label=pos_label, zero_division=1)) 
+    return torch.tensor(f1_score(labels.cpu(), preds.cpu(), pos_label=pos_label, zero_division=1)).to(device)  
 
 
 class ImageClassificationBase(nn.Module):
@@ -58,9 +58,9 @@ class ImageClassificationBase(nn.Module):
         loss = criterion(out, labels)   # Calculate loss
         acc = accuracy(out, labels)           # Calculate accuracy
         if self.binary_classification:
-            r = recall(out, labels, self.pos_label)
-            p = precision(out, labels, self.pos_label)
-            f1 = F1Score(out, labels, self.pos_label)
+            r = recall(out, labels, self.pos_label, device)
+            p = precision(out, labels, self.pos_label, device)
+            f1 = F1Score(out, labels, self.pos_label, device)
             return {'Loss': loss.detach(), 'Accuracy': acc,
                 'Recall': r, 'Precision': p, 'F1Score': f1}
 
