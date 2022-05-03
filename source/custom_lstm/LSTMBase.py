@@ -8,8 +8,8 @@ import sys
 from source.custom_cnn.image_classification_base import ImageClassificationBase
 
 class LSTMBase(ImageClassificationBase):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self,binary_classification) -> None:
+        super().__init__(binary_classification)
     
     def _init_hidden(self, batch_size, hidden_size, num_directions, num_layers, device):
         h1 = torch.autograd.Variable(torch.zeros(num_directions*num_layers, batch_size, hidden_size))
