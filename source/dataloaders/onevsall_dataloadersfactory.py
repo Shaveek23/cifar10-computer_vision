@@ -54,14 +54,14 @@ class OneVsAllDataLoadersFactory(DataLoaderFactory):
         self.__load_valid_data(
             self.dataset_path, self.test_transfomer)
 
-        return torch.utils.data.DataLoader(self.valid_ds, batch_size, shuffle=False, drop_last=False)
+        return torch.utils.data.DataLoader(self.valid_ds, batch_size, shuffle=False, drop_last=True)
 
 
     def get_test_loader(self, batch_size: int):
         self.__load_test_data(
             self.dataset_path, self.test_transfomer)
         
-        return torch.utils.data.DataLoader(self.test_ds, batch_size, shuffle=False, drop_last=False)
+        return torch.utils.data.DataLoader(self.test_ds, batch_size, shuffle=False, drop_last=True)
 
 
     def __load_train_data(self, data_dir: str, transform_train: torch.nn.Sequential):

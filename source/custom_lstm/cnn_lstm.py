@@ -8,7 +8,11 @@ import sys
 from source.custom_lstm.LSTMBase import LSTMBase
 class NN(LSTMBase):
     def __init__(self,no_classes=12, hidden_size=11,num_layers =1,batch_size = 64,dropout_inner = 0,dropout_outter = 0, device = "cpu") -> None:
-        super().__init__()
+        is_binary = False
+        if no_classes == 2:
+            is_binary = True
+        super(NN,self).__init__(is_binary)     
+
         self.lstm = nn.LSTM(32, hidden_size, num_layers,batch_first = True, dropout = dropout_inner)
         self.hidden = self._init_hidden(batch_size, hidden_size, 1, num_layers,device)
         self.linear1 = nn.Linear(hidden_size, no_classes)
