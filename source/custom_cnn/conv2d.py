@@ -18,12 +18,12 @@ class CNNSpectrogram(ImageClassificationBase):
         self.conv4 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=(3, 3), padding="same")
 
         # dropout layers
-        self.dropout1 = nn.Dropout2d(p=0.25)
-        self.dropout2 = nn.Dropout2d(p=0.5)
+        self.dropout1 = nn.Dropout(p=0.25)
+        self.dropout2 = nn.Dropout(p=0.5)
 
         # linear layers
         #TODO: zparametryzowac
-        self.linear1 = nn.Linear(in_features=1024, out_features=128)
+        self.linear1 = nn.Linear(in_features=8960, out_features=128)
         self.linear2 = nn.Linear(in_features=128, out_features=n_output)
 
         # the rest layers
@@ -38,10 +38,11 @@ class CNNSpectrogram(ImageClassificationBase):
         x = F.relu(self.conv3(x))
         x = self.maxpool(x)
         x = F.relu(self.conv4(x))
-        x = self.maxpool(x)
-        x = self.dropout1(x)
-        x = self.flatten(x)
+
+        x = F.adaptive_avg_pool2d(x, output_size=(5, 7))
+        
+        x = x.view(-1, x.shape[1] * 5 * 7)
+
         x = self.linear1(x)
         x = self.dropout2(x)
-        x = F.log_softmax(self.linear2(x), dim = 1)
         return x

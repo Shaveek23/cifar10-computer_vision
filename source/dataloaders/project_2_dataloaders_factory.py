@@ -9,13 +9,14 @@ from source.dataloaders.project_2_dataset import Project_2_Dataset
 class Project2DataLoaderFactory(DataLoaderFactory):
 
     def __init__(self, dataset_path, transform_train: torch.nn.Sequential = None, transform_test: torch.nn.Sequential = None,
-        with_silence: Boolean = True, with_unknown: Boolean = True, is_balanced=False):
+        with_silence: Boolean = True, with_unknown: Boolean = True, is_balanced=False, labels=None):
         super().__init__(dataset_path)
         self.train_transformer = transform_train
         self.test_transfomer = transform_test
         self.with_silence = with_silence
         self.with_unknown = with_unknown
         self.is_balanced = is_balanced
+        self.labels = labels
 
 
     def __str__(self):
@@ -51,12 +52,12 @@ class Project2DataLoaderFactory(DataLoaderFactory):
 
     def __load_train_data(self, data_dir: str, transform_train: torch.nn.Sequential):
         self.train_ds = Project_2_Dataset(
-            self.with_silence, self.with_unknown, data_dir, 'training', transform=transform_train)
+            self.with_silence, self.with_unknown, data_dir, 'training', transform=transform_train, labels=self.labels)
 
 
     def __load_valid_data(self, data_dir: str, transform_valid: torch.nn.Sequential):
         self.valid_ds = Project_2_Dataset(
-            self.with_silence, self.with_unknown, data_dir, 'validation', transform=transform_valid)
+            self.with_silence, self.with_unknown, data_dir, 'validation', transform=transform_valid, labels=self.labels)
 
 
     def __load_test_data(self, data_dir: str, transform_test: torch.nn.Sequential):

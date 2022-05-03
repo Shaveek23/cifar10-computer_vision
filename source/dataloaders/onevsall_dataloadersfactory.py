@@ -14,12 +14,13 @@ UNKNOWN_DIRS = ["bed", "bird", "cat", "dog", "eight", "five", "four", "happy", "
 
 class OneVsAllDataLoadersFactory(DataLoaderFactory):
 
-    def __init__(self, dataset_path, transform_train: torch.nn.Sequential = None, transform_test: torch.nn.Sequential = None, one='silence', from_file_path=None):
+    def __init__(self, dataset_path, transform_train: torch.nn.Sequential = None, transform_test: torch.nn.Sequential = None, one='silence', from_file_path=None, labels=None):
         super().__init__(dataset_path)
         self.train_transformer = transform_train
         self.test_transfomer = transform_test
         self.one = one
         self.from_file_path = from_file_path
+        self.labels = labels
 
 
         if one == 'silence':

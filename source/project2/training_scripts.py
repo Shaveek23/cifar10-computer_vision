@@ -26,10 +26,16 @@ def train_one_vs_one(n_classes, model, optimizer, criterion, train_transformer, 
         loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=True, with_unknown=True, is_balanced=is_balanced)
    
     elif n_classes == 31: # all possible classes (including silence) distinguished
-        loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=True, with_unknown=True)
+        loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=True, with_unknown=True,
+        labels={'yes': 0, 'no': 1, 'up': 2, 'down': 3, 'left': 4, 'right': 5,
+                'on': 6, 'off': 7, 'stop': 8, 'go': 9, 'zero': 10, 'one': 11, 'two': 12, 'three': 13, 'four': 14, 'five': 15, 'six': 16, 'seven': 17, 'eight': 18, 'nine': 19,
+                'happy': 20, 'house': 21, 'cat': 22, 'wow': 23, 'marvin':24, 'bird': 25, 'bed': 26, 'tree': 27, 'dog': 28, 'sheila': 29, 'silence': 30 })
     
     elif n_classes == 30:# all possible classes (without silence) distinguished
-        loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=False, with_unknown=True)
+        loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=False, with_unknown=True, 
+        labels={'yes': 0, 'no': 1, 'up': 2, 'down': 3, 'left': 4, 'right': 5,
+                'on': 6, 'off': 7, 'stop': 8, 'go': 9, 'zero': 10, 'one': 11, 'two': 12, 'three': 13, 'four': 14, 'five': 15, 'six': 16, 'seven': 17, 'eight': 18, 'nine': 19,
+                'happy': 20, 'house': 21, 'cat': 22, 'wow': 23, 'marvin':24, 'bird': 25, 'bed': 26, 'tree': 27, 'dog': 28, 'sheila': 29})
     
     else:
         print(f"Wrong number of classes: {n_classes}.")
@@ -109,19 +115,45 @@ def predict_known_vs_unknown(model_binary_classifier, test_transform, batch_size
 
 
 
-def predict_all(final_model, unknown_model, silence_model, test_transform, batch_size, device):
+def predict_all(final_model, unknown_model, silence_model, test_transform, batch_size, device, n_class=None):
     
     mapping = {0:'yes', 1:'no', 2:'up', 3:'down', 4:'left', 5:'right',
                 6:'on', 7:'off', 8:'stop', 9:'go' }
     next_label = 10
 
-
-    if unknown_model is None:
+    if n_class == 30 or n_class == 31:
+        mapping.update({
+            10: 'zero',
+            11: 'one',
+            12: 'two',
+            13: 'three',
+            14: 'four',
+            15: 'five',
+            16: 'six',
+            17: 'seven',
+            18: 'eight',
+            19: 'nine',
+            20: 'happy',
+            21: 'house',
+            22: 'cat',
+            23: 'wow',
+            24: 'marvin',
+            25: 'bird',
+            26: 'bed',
+            27: 'tree',
+            28: 'dog',
+            29: 'sheila'
+        })
+        next_label = 30
+    elif unknown_model is None:
         mapping.update({next_label:'unknown'})
         next_label += 1
-    
+
+
     if silence_model is None:
         mapping.update({next_label:'silence'})
+
+
 
     filepath_rest = None
 
