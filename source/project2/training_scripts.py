@@ -310,14 +310,14 @@ def project2_tune(config, criterion, device, n_trials=1, trial_name=None, n_epoc
 
             if mode == PROJECT2MODE.ONE_VS_ONE:
                 train_one_vs_one(n_classes, model, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
-                    is_logging, epoch_logging, is_balanced, checkpoint_path)
+                    is_logging, epoch_logging, is_balanced, trial_name, checkpoint_path)
             elif mode == PROJECT2MODE.UNKNOWN_VS_KNOWN:
                 train_unknown_vs_known(model, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
-                    is_logging, epoch_logging, checkpoint_path)
+                    is_logging, epoch_logging, trial_name, checkpoint_path)
 
             elif mode == PROJECT2MODE.SILENCE_VS_REST:
                 train_silence_vs_rest(model, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
-                    is_logging, epoch_logging, checkpoint_path)
+                    is_logging, epoch_logging, trial_name, checkpoint_path)
         
         except Exception as e:
             print(f"Exception for trial {i}: {e}")
