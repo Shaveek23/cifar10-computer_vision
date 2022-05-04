@@ -288,35 +288,39 @@ def project2_tune(config, criterion, device, n_trials=1, trial_name=None, n_epoc
     for trial in trials:
         print(f'Tuning trial: {i} / {len(trials)} - START')
 
-        checkpoint_path = generate_checkpoint_path(trial_name)
-        trial_dict = trial['trial_dict']
-        trial_objects = trial['trial_objects']
+        try:
+            checkpoint_path = generate_checkpoint_path(trial_name)
+            trial_dict = trial['trial_dict']
+            trial_objects = trial['trial_objects']
+            
+            if is_logging:
+                if not os.path.isdir(checkpoint_path):
+                    os.makedirs(checkpoint_path)
+                with open(os.path.join(checkpoint_path, "config.json"), "w") as f:
+                    json.dump(trial_dict.__str__(), f)
+
+                with open(os.path.join(checkpoint_path, "config.pickle"), 'wb') as f:
+                    pickle.dump(trial_dict, f)
+
+            model = trial_objects['model']
+            train_transform = trial_objects['train_transform']
+            test_transform = trial_objects['test_transform']
+            optimizer = trial_objects['optimizer']
+            batch_size = trial_objects['batch_size']
+
+            if mode == PROJECT2MODE.ONE_VS_ONE:
+                train_one_vs_one(n_classes, model, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
+                    is_logging, epoch_logging, is_balanced, checkpoint_path)
+            elif mode == PROJECT2MODE.UNKNOWN_VS_KNOWN:
+                train_unknown_vs_known(model, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
+                    is_logging, epoch_logging, checkpoint_path)
+
+            elif mode == PROJECT2MODE.SILENCE_VS_REST:
+                train_silence_vs_rest(model, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
+                    is_logging, epoch_logging, checkpoint_path)
         
-        if is_logging:
-            if not os.path.isdir(checkpoint_path):
-                os.makedirs(checkpoint_path)
-            with open(os.path.join(checkpoint_path, "config.json"), "w") as f:
-                json.dump(trial_dict.__str__(), f)
-
-            with open(os.path.join(checkpoint_path, "config.pickle"), 'wb') as f:
-                pickle.dump(trial_dict, f)
-
-        model = trial_objects['model']
-        train_transform = trial_objects['train_transform']
-        test_transform = trial_objects['test_transform']
-        optimizer = trial_objects['optimizer']
-        batch_size = trial_objects['batch_size']
-
-        if mode == PROJECT2MODE.ONE_VS_ONE:
-            train_one_vs_one(n_classes, model, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
-                is_logging, epoch_logging, is_balanced, checkpoint_path)
-        elif mode == PROJECT2MODE.UNKNOWN_VS_KNOWN:
-            train_unknown_vs_known(model, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
-                is_logging, epoch_logging, checkpoint_path)
-
-        elif mode == PROJECT2MODE.SILENCE_VS_REST:
-            train_silence_vs_rest(model, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
-                is_logging, epoch_logging, checkpoint_path)
+        except Exception as e:
+            print(f"Exception for trial {i}: {e}")
         
         print(f'Tuning trial: {i} / {len(trials)} - END')
         i += 1

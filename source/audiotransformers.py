@@ -25,6 +25,11 @@ def get_trains_spect_mel_aug():
         torchaudio.transforms.FrequencyMasking(freq_mask_param=50)
     ])
 
+def get_raw_data_resampled(new_freq=8_000, norm=False):     
+    if norm:
+        return transforms.Compose([transforms_audio.Resample(new_freq=8_000), transforms.Normalize(0.5, 0.5)])
+    return  transforms.Compose([transforms_audio.Resample(new_freq=8_000)])
+
 
 class AudioTrainTrasformersFactory:
 
@@ -46,6 +51,11 @@ class AudioTrainTrasformersFactory:
     def get_train_transfomer_spectogram_mel_aug():
         return get_trains_spect_mel_aug()
 
+    @staticmethod
+    def get_train_tranformer_resampled(new_freq=8_000, norm=False):     
+        return get_raw_data_resampled(new_freq, norm)
+
+
 class AudioTestTrasformersFactory:
 
     @staticmethod
@@ -64,3 +74,7 @@ class AudioTestTrasformersFactory:
     @staticmethod
     def get_test_transfomer_spectogram_mel_aug():
         return get_trains_spect_mel_aug()
+
+    @staticmethod
+    def get_test_tranformer_resampled(new_freq=8_000, norm=False):     
+        return get_raw_data_resampled(new_freq, norm)

@@ -1,61 +1,51 @@
-from source.project2.training_scripts import train_one_vs_one, train_silence_vs_rest, train_unknown_vs_known
-import os
 import torch
-import torch.optim
-import torch.nn
+from source.custom_cnn.conv1d import M5
+from source.audiotransformers import AudioTrainTrasformersFactory, AudioTestTrasformersFactory
+from source.project2.training_scripts import project2_tune, PROJECT2MODE
 
-from source.training import fit
-from source.audiotransformers import AudioTestTrasformersFactory, AudioTrainTrasformersFactory
-from source.utils.config_manager import ConfigManager
-from source.dataloaders.project_2_dataloaders_factory import Project2DataLoaderFactory
-from source.custom_cnn.project2.vgglike import VGGLike
-from source.project2.training_scripts import train_unknown_vs_known
+for n_classes in [2, 10, 12, 31]:
+    config = {
+        'net': [
+            {
+                'type': M5,
+                'arguments': {
+                'stride': [4, 8, 16, 32],
+                'n_channel': [16, 32, 64],
+                'n_output': [n_classes] # in [] !!!
+                }
+            }
+        ],
+        'optimizer': [
+            {
+                'type': torch.optim.Adam,
+                'arguments': {
+                    'lr': [0.01, 0.05, 0.001],
+                    'weight_decay': [0, 0.001]
+                }
+            }
+        ],
+        'transform': [
+            {
+                'type': {
+                    'train': AudioTrainTrasformersFactory.get_train_tranformer_resampled,
+                    'test': AudioTestTrasformersFactory.get_test_tranformer_resampled
+                },
+                'arguments': {
+                    'new_freq': [8_000, 16_000],
+                    'is_norm': [True, False] 
+                }
+            }
+        ],
+        'batch_size': [32, 64]
+    }
 
-
-# definitions
-batch_size = 64
-epochs = 100
-
-transform_train = AudioTrainTrasformersFactory.get_train_transformer_spectogram_mel()
-transform_test = AudioTestTrasformersFactory.get_test_transformer_spectogram_mel()
-
-dataset_name = 'speech_recognition'
-dataset_path = os.path.join(
-    ConfigManager().get_dataset_path(dataset_name))
-
-for p in [0.2, 0.5]:
-## 12 classes
-    model = VGGLike(n_output=12, p_last_droput=p)
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0001)
     criterion = torch.nn.CrossEntropyLoss()
-    train_one_vs_one(12, model, optimizer, criterion, transform_train, transform_test, batch_size, epochs, 'cuda', is_balanced=True, trial_name=f'12classes_specaug_mel_p{p}')
-
-
-    # 10 classes
-    model = VGGLike(n_output=10, p_last_droput=p)
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0001)
-    criterion = torch.nn.CrossEntropyLoss()
-    train_one_vs_one(10, model, optimizer, criterion, transform_train, transform_test, batch_size, epochs, 'cuda', trial_name=f'10classes_specaug_mel{p}')
-
-
-    # unknown vs known
-    model = VGGLike(n_output=2, p_last_droput=p)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0001)
-    criterion = torch.nn.CrossEntropyLoss()
-
-    train_unknown_vs_known(model, optimizer=optimizer,criterion=criterion,train_transform=transform_train,test_transform=transform_test,
-    batch_size=batch_size, n_epochs=epochs, device='cuda', trial_name=f'unknownvsknown_specaug_mel{p}')
-
-
-    # silence vs rest
-    model = VGGLike(n_output=2, p_last_droput=p)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0001)
-    criterion = torch.nn.CrossEntropyLoss()
-
-    train_silence_vs_rest(model, optimizer, criterion, transform_train, transform_test, batch_size, epochs, 'cuda', trial_name=f'silencevsrest_specaug_mel{p}')
-
+    
+    if n_classes > 2:
+        project2_tune(config, criterion, device='cpu', n_trials=10, trial_name=f'conv1d_nclass_{n_classes}', n_epochs=10, mode=PROJECT2MODE.ONE_VS_ONE, n_classes=n_classes)
+    else:
+        project2_tune(config, criterion, device='cpu', n_trials=10, trial_name=f'conv1d_silencevsrest', n_epochs=10, mode=PROJECT2MODE.SILENCE_VS_REST, n_classes=n_classes)
+        project2_tune(project2_tune(config, criterion, device='cpu', n_trials=10, trial_name=f'conv1d_knownvsunknown', n_epochs=10, mode=PROJECT2MODE.UNKNOWN_VS_KNOWN, n_classes=n_classes))
 
 
 
