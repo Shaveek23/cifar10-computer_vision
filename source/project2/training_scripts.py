@@ -53,7 +53,8 @@ def train_one_vs_one(n_classes, model, optimizer, criterion, train_transformer, 
 
 def predict_one_vs_one(model, test_transform, batch_size, device, one_vs_rest_path=None):
     ''' Performs predicting of multiclassification problem, when 'one_vs_rest_path' specified it predicts only 'rest' files (fron the file)'''
-
+    if device == 'cuda':
+        model.to(device)
     
     svr_factory = OneVsAllDataLoadersFactory(dataset_path, None, test_transform, from_file_path=one_vs_rest_path)
 
@@ -78,7 +79,8 @@ def train_silence_vs_rest(model_binary_classifier, optimizer, criterion, train_t
 
 
 def predict_silence_vs_rest(model_binary_classifier, test_transform, batch_size, device) -> str:
-  
+    if device == 'cuda':
+        model_binary_classifier.to(device)  
 
     svr_factory = OneVsAllDataLoadersFactory(dataset_path, None, test_transform)
 
@@ -104,7 +106,9 @@ def train_unknown_vs_known(model_binary_classifier, optimizer, criterion, train_
 
 
 def predict_known_vs_unknown(model_binary_classifier, test_transform, batch_size, device, silence_vs_rest_path) -> str:
-  
+    if device == 'cuda':
+        model_binary_classifier.to(device)   
+    
 
     svr_factory = OneVsAllDataLoadersFactory(dataset_path, None, test_transform, from_file_path=silence_vs_rest_path)
 
