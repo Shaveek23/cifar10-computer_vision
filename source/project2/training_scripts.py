@@ -4,12 +4,13 @@ import torch
 import json
 from os import listdir
 from os.path import isfile, join
-
+from source.custom_hyperparams_tuning import get_trials
+from enum import Enum
 from source.utils.config_manager import ConfigManager
 from source.dataloaders.onevsall_dataloadersfactory import OneVsAllDataLoadersFactory
 from source.dataloaders.project_2_dataloaders_factory import Project2DataLoaderFactory
-
-from source.training import fit
+from source.training import fit, generate_checkpoint_path
+import pickle
 
 
 
@@ -18,7 +19,7 @@ dataset_path = os.path.join(ConfigManager().get_dataset_path(dataset_name))
 
 # Monolithic approach (one model)
 def train_one_vs_one(n_classes, model, optimizer, criterion, train_transformer, test_transform, batch_size, n_epochs, device,
- is_logging=True, epoch_logging=1, is_balanced=False, trial_name=None):
+ is_logging=True, epoch_logging=1, is_balanced=True, trial_name=None, checkpoint_path=None):
 
     if n_classes == 10: # only 10 known
         loaders_factory = Project2DataLoaderFactory(dataset_path, train_transformer, test_transform, with_silence=False, with_unknown=False)
@@ -48,7 +49,8 @@ def train_one_vs_one(n_classes, model, optimizer, criterion, train_transformer, 
 
     train_loader = loaders_factory.get_train_loader(batch_size)
     valid_loader = loaders_factory.get_valid_loader(batch_size)
-    fit(model, train_loader, valid_loader, optimizer, criterion, n_epochs, device, is_logging=is_logging, epoch_logging=epoch_logging, trial_name=trial_name)
+    fit(model, train_loader, valid_loader, optimizer, criterion, n_epochs, device, is_logging=is_logging, epoch_logging=epoch_logging,
+        trial_name=trial_name, checkpoint_path=checkpoint_path)
 
 
 def predict_one_vs_one(model, test_transform, batch_size, device, one_vs_rest_path=None):
@@ -66,7 +68,8 @@ def predict_one_vs_one(model, test_transform, batch_size, device, one_vs_rest_pa
 
 
 # SILENCE VS REST
-def train_silence_vs_rest(model_binary_classifier, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device, trial_name=None):
+def train_silence_vs_rest(model_binary_classifier, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
+    is_logging=True, epoch_logging=1, trial_name=None, checkpoint_path=None):
     ''' Binary classification between silence (basic + extra): 0 and rest (known and unknown): 1'''
   
     svr_factory = OneVsAllDataLoadersFactory(dataset_path, train_transform, test_transform, one='silence')
@@ -74,7 +77,8 @@ def train_silence_vs_rest(model_binary_classifier, optimizer, criterion, train_t
     train_loader = svr_factory.get_train_loader(batch_size)
     valid_loader = svr_factory.get_valid_loader(batch_size)
 
-    fit(model_binary_classifier, train_loader, valid_loader, optimizer, criterion, n_epochs, device, is_logging=True, epoch_logging=1, trial_name=trial_name)
+    fit(model_binary_classifier, train_loader, valid_loader, optimizer, criterion, n_epochs, device, 
+        is_logging=is_logging, epoch_logging=epoch_logging, trial_name=trial_name, checkpoint_path=checkpoint_path)
 
 
 def predict_silence_vs_rest(model_binary_classifier, test_transform, batch_size, device) -> str:
@@ -92,7 +96,8 @@ def predict_silence_vs_rest(model_binary_classifier, test_transform, batch_size,
 
 
 # UNKNOWN VS KNOWN
-def train_unknown_vs_known(model_binary_classifier, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device, trial_name=None):
+def train_unknown_vs_known(model_binary_classifier, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device, 
+    is_logging=True, epoch_logging=1, trial_name=None, checkpoint_path=None):
     ''' Binary classification between known and unknown (no silence), 0 - unknown, 1 - known'''
     
     svr_factory = OneVsAllDataLoadersFactory(dataset_path, train_transform, test_transform, one='unknown')
@@ -100,7 +105,8 @@ def train_unknown_vs_known(model_binary_classifier, optimizer, criterion, train_
     train_loader = svr_factory.get_train_loader(batch_size)
     valid_loader = svr_factory.get_valid_loader(batch_size)
 
-    fit(model_binary_classifier, train_loader, valid_loader, optimizer, criterion, n_epochs, device, is_logging=True, epoch_logging=1, trial_name=trial_name)
+    fit(model_binary_classifier, train_loader, valid_loader, optimizer, criterion, n_epochs, device,
+        is_logging=is_logging, epoch_logging=epoch_logging, trial_name=trial_name, checkpoint_path=checkpoint_path)
 
 
 def predict_known_vs_unknown(model_binary_classifier, test_transform, batch_size, device, silence_vs_rest_path) -> str:
@@ -156,7 +162,6 @@ def predict_all(final_model, unknown_model, silence_model, test_transform, batch
 
     if silence_model is None:
         mapping.update({next_label:'silence'})
-
 
 
     filepath_rest = None
@@ -261,5 +266,53 @@ def read_best_model_and_info(checkpoint_name: str, best_epoch: int, device: str 
         optimizer_info = json.load(f)
         f.close()
 
-
     return state_param_dir, model_info, optimizer_info
+
+
+class PROJECT2MODE(Enum):
+    ONE_VS_ONE = 0
+    SILENCE_VS_REST = 1
+    UNKNOWN_VS_KNOWN = 2
+
+
+def project2_tune(config, criterion, device, n_trials=1, trial_name=None, n_epochs=100, mode: PROJECT2MODE = PROJECT2MODE.ONE_VS_ONE,
+    is_logging=True, epoch_logging=1, is_balanced=True, n_classes=None):
+
+
+    trials = get_trials(config, n_trials)
+    i = 1
+    for trial in trials:
+        print(f'Tuning trial: {i} / {len(trials)} - START')
+
+        checkpoint_path = generate_checkpoint_path(trial_name)
+        trial_dict = trial['trial_dict']
+        trial_objects = trial['trial_objects']
+        
+        if is_logging:
+            if not os.path.isdir(checkpoint_path):
+                os.makedirs(checkpoint_path)
+            with open(os.path.join(checkpoint_path, "config.json"), "w") as f:
+                json.dump(trial_dict.__str__(), f)
+
+            with open(os.path.join(checkpoint_path, "config.pickle"), 'wb') as f:
+                pickle.dump(trial_dict, f)
+
+        model = trial_objects['model']
+        train_transform = trial_objects['train_transform']
+        test_transform = trial_objects['test_transform']
+        optimizer = trial_objects['optimizer']
+        batch_size = trial_objects['batch_size']
+
+        if mode == PROJECT2MODE.ONE_VS_ONE:
+            train_one_vs_one(n_classes, model, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
+                is_logging, epoch_logging, is_balanced, checkpoint_path)
+        elif mode == PROJECT2MODE.UNKNOWN_VS_KNOWN:
+            train_unknown_vs_known(model, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
+                is_logging, epoch_logging, checkpoint_path)
+
+        elif mode == PROJECT2MODE.SILENCE_VS_REST:
+            train_silence_vs_rest(model, optimizer, criterion, train_transform, test_transform, batch_size, n_epochs, device,
+                is_logging, epoch_logging, checkpoint_path)
+        
+        print(f'Tuning trial: {i} / {len(trials)} - END')
+        i += 1

@@ -22,9 +22,10 @@ def evaluate(model, data_loader, criterion, device="cpu"):
     return model.validation_epoch_end(outputs)
 
 
-def fit(model, train_loader, val_loader, optimizer, criterion, epochs=10, device="cpu", is_logging=False, epoch_logging=5, trial_name=None):
-    
-    checkpoint_path = __generate_checkpoint_path(trial_name)
+def fit(model, train_loader, val_loader, optimizer, criterion, epochs=10, device="cpu", is_logging=False, epoch_logging=5, trial_name=None, checkpoint_path=None):
+
+    if checkpoint_path is None:  
+        checkpoint_path = generate_checkpoint_path(trial_name)
 
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
@@ -128,7 +129,7 @@ def plot_result(history, path, epoch=None):
         fig.savefig(os.path.join(path, file_name))
 
 
-def __generate_checkpoint_path(trial_name=None):
+def generate_checkpoint_path(trial_name=None):
     base_path = ConfigManager().get_checkpoints_path()
     if trial_name is not None:
         dir_name = f'result_{trial_name}_{ConfigManager().get_now()}'
@@ -144,7 +145,7 @@ def __log_result(history, model, optimizer, criterion, epoch, checkpoint_path):
     cache_path = os.path.join(checkpoint_path, 'cache.pt')
     torch.save((model.state_dict(), optimizer.state_dict(), criterion.state_dict()), cache_path)
     
-    for cache in [('results', history), ('model', model), ('optimizer', optimizer), ('criterion', criterion)]:
+    for cache in [('results', history)]:
         with open(os.path.join(checkpoint_path, f'{cache[0]}.json'), 'w') as file:
             file.write(json.dumps(cache[1]))
     
