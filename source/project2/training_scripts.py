@@ -1,5 +1,9 @@
 import os
 import numpy as np
+import torch
+import json
+from os import listdir
+from os.path import isfile, join
 
 from source.utils.config_manager import ConfigManager
 from source.dataloaders.onevsall_dataloadersfactory import OneVsAllDataLoadersFactory
@@ -204,3 +208,58 @@ def save_prelabeled(filepath, files):
             f.write(f'{file_name}\n')
 
     return filepath
+
+
+def get_results_from_data(checkpoint_name):
+    checkpoints_path = ConfigManager().get_checkpoints_path()
+    mypath = os.path.join(checkpoints_path, checkpoint_name)
+    only_dirs = [f for f in listdir(mypath) if not isfile(join(mypath, f))]
+
+    only_dirs = sorted(only_dirs, key=lambda x: int(x.split('_')[-1]))
+
+    last_epoch_dir = only_dirs[-1]
+
+    f = open(os.path.join(mypath, os.path.join(last_epoch_dir, 'results.json')))
+    data = json.load(f)
+    f.close()
+
+    return data
+
+
+def get_best_epoch(data, measure='Accuracy'):
+
+    assert measure in ['Accuracy', 'Recall', 'Precision', 'F1Score'], ( "measure should be one of: 'Accuracy', 'Recall', 'Precision', 'F1Score'")
+    
+    idx_max = np.argmax([x[measure] for x in data])
+    best_epoch = idx_max + 1
+
+    return best_epoch, data[idx_max][measure]
+
+
+def read_best_model_and_info(checkpoint_name: str, best_epoch: int, device: str = 'cpu'):
+    
+    checkpoints_path = ConfigManager().get_checkpoints_path()
+    mypath = os.path.join(checkpoints_path, checkpoint_name, f'epoch_{best_epoch}')
+
+    map_loc = None
+    if device == 'cpu':
+        map_loc = torch.device('cpu')
+
+    state_param_dir = torch.load(os.path.join(mypath, 'cache.pt'), map_location=map_loc)
+    
+    model_info_path = os.path.join(mypath, 'model.json')
+    model_info = None
+    if os.path.exists(model_info_path):
+        f = open(model_info_path)
+        model_info = json.load(f)
+        f.close()
+
+    opt_info_path = os.path.join(mypath, 'optimizer.json')
+    optimizer_info = None
+    if os.path.exists(model_info_path):
+        f = open(opt_info_path)
+        optimizer_info = json.load(f)
+        f.close()
+
+
+    return state_param_dir, model_info, optimizer_info
