@@ -21,7 +21,7 @@ batch_size = 2
 n_classes = 31
 output_file_name = "LSTM31_aug"
 final_model = NN(hidden_size=20,num_layers=2,batch_size=batch_size,no_classes=n_classes, device="cuda", dropout_inner=0, dropout_outter=0)
-final_model_path = os.path.join(ConfigManager().get_models_path(),"models\\LSTM31_aug.pt")
+final_model_path = os.path.join(ConfigManager().get_models_path(),"LSTM31_aug.pt")
 silence_model= None
 silence_model_path = ""
 unknown_model = None
