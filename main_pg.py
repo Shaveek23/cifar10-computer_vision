@@ -3,7 +3,7 @@ from source.custom_cnn.conv1d import M5
 from source.audiotransformers import AudioTrainTrasformersFactory, AudioTestTrasformersFactory
 from source.project2.training_scripts import project2_tune, PROJECT2MODE
 
-for n_classes in [2, 10, 12, 31]:
+for n_classes in [10, 12, 31]:
     config = {
         'net': [
             {
@@ -40,11 +40,9 @@ for n_classes in [2, 10, 12, 31]:
 
     criterion = torch.nn.CrossEntropyLoss()
     
-    if n_classes > 2:
-        project2_tune(config, criterion, device='cpu', n_trials=10, trial_name=f'conv1d_nclass_{n_classes}', n_epochs=10, mode=PROJECT2MODE.ONE_VS_ONE, n_classes=n_classes)
-    else:
-        project2_tune(config, criterion, device='cpu', n_trials=5, trial_name=f'conv1d_silencevsrest', n_epochs=10, mode=PROJECT2MODE.SILENCE_VS_REST, n_classes=n_classes)
-        project2_tune(project2_tune(config, criterion, device='cpu', n_trials=10, trial_name=f'conv1d_knownvsunknown', n_epochs=10, mode=PROJECT2MODE.UNKNOWN_VS_KNOWN, n_classes=n_classes))
+
+    project2_tune(config, criterion, device='cpu', n_trials=10, trial_name=f'conv1d_nclass_{n_classes}', n_epochs=30, mode=PROJECT2MODE.ONE_VS_ONE, n_classes=n_classes)
+
 
 
 
