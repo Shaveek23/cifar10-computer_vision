@@ -74,5 +74,5 @@ class AudioTestTrasformersFactory:
         return get_trains_spect_mel_aug()
 
     @staticmethod
-    def get_test_tranformer_resampled(new_freq=8_000, norm=False):     
-        return get_raw_data_resampled(new_freq, norm)
+    def get_test_tranformer_resampled(new_freq=8_000):     
+        return get_raw_data_resampled(new_freq)
