@@ -5,12 +5,12 @@ import torchaudio
 
 
 # definitions of common functions
-def get_trans_spect_aug(new_freq=8000):
+def get_trans_spect_aug(new_freq = 8000,time_mask_param=10,freq_mask_param = 10):
     return transforms.Compose([torch.nn.Sequential(
         torchaudio.transforms.Resample(new_freq=new_freq),
         torchaudio.transforms.Spectrogram(),
-        torchaudio.transforms.TimeMasking(time_mask_param=10),
-        torchaudio.transforms.FrequencyMasking(freq_mask_param=50)
+        torchaudio.transforms.TimeMasking(time_mask_param=time_mask_param),
+        torchaudio.transforms.FrequencyMasking(freq_mask_param=freq_mask_param)
         )])
 
 def get_trans_spect_mel():
@@ -37,8 +37,9 @@ class AudioTrainTrasformersFactory:
 
 
     @staticmethod  
-    def get_transformer_spectogram_aug(new_freq=8000):
-        return get_trans_spect_aug(new_freq)
+
+    def get_transformer_spectogram_aug(new_freq=8000,time_mask_param = 10,freq_mask_param = 50):
+        return get_trans_spect_aug(new_freq,time_mask_param,freq_mask_param)
 
 
     @staticmethod
@@ -61,8 +62,8 @@ class AudioTestTrasformersFactory:
         return transforms.Compose([transforms_audio.Resample(new_freq=8_000), transforms_audio.Spectrogram()])
 
     @staticmethod 
-    def get_transformer_spectogram_aug(new_freq=8000):
-        return get_trans_spect_aug(new_freq)
+    def get_transformer_spectogram_aug(new_freq=8000,time_mask_param = 10,freq_mask_param = 50):
+        return get_trans_spect_aug(new_freq,0,0)
 
 
     @staticmethod
