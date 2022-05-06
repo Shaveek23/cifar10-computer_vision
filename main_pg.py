@@ -1,5 +1,6 @@
 import torch
-from source.custom_cnn.conv1d import M5
+from source.custom_cnn.project2.vgglike import VGGLike
+from source.custom_cnn.project2.VGGLikeParametrized import VGGLikeParametrized
 from source.audiotransformers import AudioTrainTrasformersFactory, AudioTestTrasformersFactory
 from source.project2.training_scripts import project2_tune, PROJECT2MODE
 
@@ -7,11 +8,18 @@ for n_classes in [10, 12, 31]:
     config = {
         'net': [
             {
-                'type': M5,
+                'type': VGGLike,
                 'arguments': {
-                'stride': [4, 8, 16, 32],
-                'n_channel': [16, 32, 64],
-                'n_output': [n_classes] # in [] !!!
+                'p_last_droput': [0.1, 0.2, 0.3],
+                'n_output': [n_classes] 
+                }
+            },
+            {
+                'type': VGGLikeParametrized,
+                'arguments': {
+                'p_last_droput': [0.1, 0.2, 0.3],
+                'n_output': [n_classes],
+                'K': [4, 8, 16, 32] 
                 }
             }
         ],
@@ -20,18 +28,28 @@ for n_classes in [10, 12, 31]:
                 'type': torch.optim.Adam,
                 'arguments': {
                     'lr': [0.01, 0.05, 0.001],
-                    'weight_decay': [0, 0.001]
+                    'weight_decay': [0, 0.0001]
                 }
             }
         ],
         'transform': [
             {
                 'type': {
-                    'train': AudioTrainTrasformersFactory.get_train_tranformer_resampled,
-                    'test': AudioTestTrasformersFactory.get_test_tranformer_resampled
+                    'train': AudioTrainTrasformersFactory.get_train_transformer_spectogram_mel,
+                    'test': AudioTestTrasformersFactory.get_test_transformer_spectogram_mel
                 },
                 'arguments': {
-                    'new_freq': [8_000, 16_000]
+
+                }
+            },
+            {
+                'type': {
+                    'train': AudioTrainTrasformersFactory.get_train_asteroid_transformer,
+                    'test': AudioTestTrasformersFactory.get_test_asteroid_transformer
+                },
+                'arguments': {
+                    'p': [0.1, 0.2, 0.5],
+                    'sr': [8_000, 16_000]
                 }
             }
         ],
@@ -40,8 +58,11 @@ for n_classes in [10, 12, 31]:
 
     criterion = torch.nn.CrossEntropyLoss()
     
+    if n_classes == 31:
+        project2_tune(config, criterion, device='cuda', n_trials=20, trial_name=f'conv2d_nclass_{n_classes}', n_epochs=50, mode=PROJECT2MODE.ONE_VS_ONE, n_classes=n_classes)
+    else:
+        project2_tune(config, criterion, device='cuda', n_trials=10, trial_name=f'conv2d_nclass_{n_classes}', n_epochs=30, mode=PROJECT2MODE.ONE_VS_ONE, n_classes=n_classes)
 
-    project2_tune(config, criterion, device='cpu', n_trials=10, trial_name=f'conv1d_nclass_{n_classes}', n_epochs=30, mode=PROJECT2MODE.ONE_VS_ONE, n_classes=n_classes)
 
 
 

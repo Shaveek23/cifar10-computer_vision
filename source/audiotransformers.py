@@ -2,6 +2,11 @@ import torchaudio.transforms as transforms_audio
 import torchvision.transforms as transforms
 import torch
 import torchaudio
+import torch
+from torch_audiomentations import Compose, Gain, PolarityInversion, AddBackgroundNoise, TimeInversion, Shift, PitchShift
+import os
+from source.utils.config_manager import ConfigManager
+
 
 
 # definitions of common functions
@@ -27,6 +32,26 @@ def get_trains_spect_mel_aug():
 
 def get_raw_data_resampled(new_freq=8_000):     
     return  transforms.Compose([transforms_audio.Resample(new_freq=8_000)])
+
+def get_transform_raw(p=0.2, sample_rate=16_000):
+
+    return Compose(
+        transforms = [
+            AddBackgroundNoise(p=p, sample_rate=sample_rate, background_paths=
+                os.path.join(ConfigManager().get_dataset_path('speech_recognition'), r'train\audio\_background_noise_')),
+            #Gain(
+            #     min_gain_in_db=-15.0,
+            #     max_gain_in_db=5.0,
+            #     p=p,
+            #     sample_rate=sample_rate
+            # ),
+            #TimeInversion(p=p, sample_rate=sample_rate),
+            #PolarityInversion(p=p, sample_rate=sample_rate),
+            PitchShift(p=p, sample_rate=sample_rate),
+            Shift(p=p, sample_rate=sample_rate),
+            transforms_audio.MelSpectrogram(n_fft=512, hop_length=128, n_mels=90)
+        ]
+    )
 
 
 class AudioTrainTrasformersFactory:
@@ -54,6 +79,10 @@ class AudioTrainTrasformersFactory:
     def get_train_tranformer_resampled(new_freq=8_000):     
         return get_raw_data_resampled(new_freq)
 
+    @staticmethod
+    def get_train_asteroid_transformer(p=0.2, sr=16_000):
+        return get_transform_raw(p, sr)
+
 
 class AudioTestTrasformersFactory:
 
@@ -77,3 +106,7 @@ class AudioTestTrasformersFactory:
     @staticmethod
     def get_test_tranformer_resampled(new_freq=8_000):     
         return get_raw_data_resampled(new_freq)
+
+    @staticmethod
+    def get_test_asteroid_transformer(p=0.2, sr=16_000):
+        return get_transform_raw(p, sr)

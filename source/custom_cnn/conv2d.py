@@ -45,4 +45,5 @@ class CNNSpectrogram(ImageClassificationBase):
 
         x = self.linear1(x)
         x = self.dropout2(x)
+        x = self.linear2(x)
         return x
