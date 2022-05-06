@@ -35,10 +35,14 @@ def get_raw_data_resampled(new_freq=8_000):
 
 def get_transform_raw(p=0.2, sample_rate=16_000):
 
+    noise_path = os.path.join(ConfigManager().get_dataset_path('speech_recognition'), r'train\audio\_background_noise_')
+    noise_files = ('doing_the_dishes.wav', "dude_miaowing.wav", "exercise_bike.wav", "pink_noise.wav", "running_tap.wav", "white_noise.wav")
+
+    noise_paths = [os.path.join(noise_path, p) for p in noise_files]
     return Compose(
+       
         transforms = [
-            AddBackgroundNoise(p=p, sample_rate=sample_rate, background_paths=
-                os.path.join(ConfigManager().get_dataset_path('speech_recognition'), r'train\audio\_background_noise_')),
+            AddBackgroundNoise(p=p, sample_rate=sample_rate, background_paths=noise_paths),
             #Gain(
             #     min_gain_in_db=-15.0,
             #     max_gain_in_db=5.0,
