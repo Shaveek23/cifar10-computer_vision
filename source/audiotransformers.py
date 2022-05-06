@@ -42,7 +42,7 @@ def get_transform_raw(p=0.2, sample_rate=16_000):
     return Compose(
        
         transforms = [
-            AddBackgroundNoise(p=p, sample_rate=sample_rate, background_paths=noise_paths),
+            #AddBackgroundNoise(p=p, sample_rate=sample_rate, background_paths=noise_paths),
             #Gain(
             #     min_gain_in_db=-15.0,
             #     max_gain_in_db=5.0,
