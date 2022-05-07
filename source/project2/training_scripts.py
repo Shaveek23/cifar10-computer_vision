@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from sklearn.metrics import confusion_matrix
 import torch
 import json
 from os import listdir
@@ -11,6 +12,7 @@ from source.dataloaders.onevsall_dataloadersfactory import OneVsAllDataLoadersFa
 from source.dataloaders.project_2_dataloaders_factory import Project2DataLoaderFactory
 from source.training import fit, generate_checkpoint_path
 import pickle
+from source.utils.confusion_matrix import save_confusion_matrix
 
 
 
@@ -53,14 +55,17 @@ def train_one_vs_one(n_classes, model, optimizer, criterion, train_transformer, 
         trial_name=trial_name, checkpoint_path=checkpoint_path)
 
 
-def predict_one_vs_one(model, test_transform, batch_size, device, one_vs_rest_path=None):
+def predict_one_vs_one(model, test_transform, batch_size, device, one_vs_rest_path=None, is_valid_dataset=False):
     ''' Performs predicting of multiclassification problem, when 'one_vs_rest_path' specified it predicts only 'rest' files (fron the file)'''
     if device == 'cuda':
         model.to(device)
     
     svr_factory = OneVsAllDataLoadersFactory(dataset_path, None, test_transform, from_file_path=one_vs_rest_path)
 
-    test_loader = svr_factory.get_test_loader(batch_size)
+    if is_valid_dataset:
+        test_loader = svr_factory.get_valid_loader(batch_size)
+    else:
+        test_loader = svr_factory.get_test_loader(batch_size)
 
     predictions = model.predict(test_loader, device)
     filenames = test_loader.dataset._walker
@@ -82,13 +87,16 @@ def train_silence_vs_rest(model_binary_classifier, optimizer, criterion, train_t
         is_logging=is_logging, epoch_logging=epoch_logging, trial_name=trial_name, checkpoint_path=checkpoint_path)
 
 
-def predict_silence_vs_rest(model_binary_classifier, test_transform, batch_size, device) -> str:
+def predict_silence_vs_rest(model_binary_classifier, test_transform, batch_size, device, is_valid_dataset=False) -> str:
     if device == 'cuda':
         model_binary_classifier.to(device)  
 
     svr_factory = OneVsAllDataLoadersFactory(dataset_path, None, test_transform)
 
-    test_loader = svr_factory.get_test_loader(batch_size)
+    if is_valid_dataset:
+        test_loader = svr_factory.get_valid_loader(batch_size)
+    else:
+        test_loader = svr_factory.get_test_loader(batch_size)
 
     predictions = model_binary_classifier.predict(test_loader, device)
 
@@ -111,14 +119,17 @@ def train_unknown_vs_known(model_binary_classifier, optimizer, criterion, train_
         is_logging=is_logging, epoch_logging=epoch_logging, trial_name=trial_name, checkpoint_path=checkpoint_path)
 
 
-def predict_known_vs_unknown(model_binary_classifier, test_transform, batch_size, device, silence_vs_rest_path) -> str:
+def predict_known_vs_unknown(model_binary_classifier, test_transform, batch_size, device, silence_vs_rest_path, is_valid_dataset=False) -> str:
     if device == 'cuda':
         model_binary_classifier.to(device)   
     
 
     svr_factory = OneVsAllDataLoadersFactory(dataset_path, None, test_transform, from_file_path=silence_vs_rest_path)
 
-    test_loader = svr_factory.get_test_loader(batch_size)
+    if is_valid_dataset:
+        test_loader = svr_factory.get_valid_loader(batch_size)
+    else:
+        test_loader = svr_factory.get_test_loader(batch_size)
 
     predictions = model_binary_classifier.predict(test_loader, device)
 
@@ -129,7 +140,7 @@ def predict_known_vs_unknown(model_binary_classifier, test_transform, batch_size
 
 
 
-def predict_all(final_model, unknown_model, silence_model, test_transform, batch_size, device, n_class=None):
+def predict_all(final_model, unknown_model, silence_model, test_transform, batch_size, device, n_class=None, is_valid_dataset=False):
     
     mapping = {0:'yes', 1:'no', 2:'up', 3:'down', 4:'left', 5:'right',
                 6:'on', 7:'off', 8:'stop', 9:'go' }
@@ -179,7 +190,7 @@ def predict_all(final_model, unknown_model, silence_model, test_transform, batch
     results = []
 
     if silence_model is not None:
-        predicts, filenames = predict_silence_vs_rest(silence_model, test_transform, batch_size, device)
+        predicts, filenames = predict_silence_vs_rest(silence_model, test_transform, batch_size, device, is_valid_dataset)
         
         silence_filepaths = np.array(filenames)[np.where(np.array(predicts) == 0)[0]]
         silence_filenames = [os.path.split(s)[-1] for s in silence_filepaths]
@@ -189,7 +200,7 @@ def predict_all(final_model, unknown_model, silence_model, test_transform, batch
 
 
     if unknown_model is not None:
-        predicts, filenames = predict_known_vs_unknown(unknown_model, test_transform, batch_size, device, filepath_rest)
+        predicts, filenames = predict_known_vs_unknown(unknown_model, test_transform, batch_size, device, filepath_rest, is_valid_dataset)
         unknown_filepaths = np.array(filenames)[np.where(np.array(predicts) == 0)[0]]
         unknown_filenames = [os.path.split(s)[-1] for s in unknown_filepaths]
         labels = ['unknown'] * len(unknown_filenames)
@@ -197,7 +208,7 @@ def predict_all(final_model, unknown_model, silence_model, test_transform, batch
         save_prelabeled(filepath_rest, files=unknown_filepaths)
 
 
-    predicts, filepaths = predict_one_vs_one(final_model, test_transform, batch_size, device, filepath_rest)
+    predicts, filepaths = predict_one_vs_one(final_model, test_transform, batch_size, device, filepath_rest, is_valid_dataset)
     filenames = [os.path.split(s)[-1] for s in filepaths]
     predicts = np.vectorize(mapping.get)(np.array(predicts))
     results += list(zip(filenames, predicts))
@@ -324,3 +335,32 @@ def project2_tune(config, criterion, device, n_trials=1, trial_name=None, n_epoc
         
         print(f'Tuning trial: {i} / {len(trials)} - END')
         i += 1
+
+
+def get_confusion_matrix(path, final_model, unknown_model, silence_model, test_transform, device, n_classes=None):
+
+    res = predict_all(final_model, unknown_model, silence_model, test_transform, 1, device, n_classes, is_valid_dataset=True)
+
+    dataset_path = ConfigManager().get_dataset_path('speech_recognition')
+
+    if n_classes == 31 or n_classes == 30:
+        labels = {'yes': 0, 'no': 1, 'up': 2, 'down': 3, 'left': 4, 'right': 5,
+                    'on': 6, 'off': 7, 'stop': 8, 'go': 9, 'zero': 10, 'one': 11, 'two': 12, 'three': 13, 'four': 14, 'five': 15, 'six': 16, 'seven': 17, 'eight': 18, 'nine': 19,
+                    'happy': 20, 'house': 21, 'cat': 22, 'wow': 23, 'marvin':24, 'bird': 25, 'bed': 26, 'tree': 27, 'dog': 28, 'sheila': 29, 'silence': 30 }
+        valid_loader = Project2DataLoaderFactory(dataset_path, None, test_transform, with_silence=True, with_unknown=True, labels=labels).get_valid_loader(1)
+    
+    else:
+        valid_loader =  Project2DataLoaderFactory(dataset_path, None, test_transform, with_silence=True, with_unknown=True).get_valid_loader(1)
+
+    y_true = valid_loader.dataset.get_target()
+
+    y_true = [x[1] for x in y_true]
+    y_pred = [x[1] for x in res]
+
+    disp_labels = np.unique(y_true)
+
+    save_confusion_matrix(path, y_true, y_pred, disp_labels)
+
+
+
+

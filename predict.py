@@ -29,5 +29,5 @@ unknown_model_path = ""
 
 test_transform = AudioTestTrasformersFactory.get_test_transformer_spectogram()
 
-create_kaggle_submision_file_audio(os.path.join(ConfigManager().get_base_path(),"predictions/{output_file_name}.csv"),test_transform, final_model, final_model_path, unknown_model, unknown_model_path, 
+create_kaggle_submision_file_audio(output_file_name, test_transform, final_model, final_model_path, unknown_model, unknown_model_path, 
 silence_model, silence_model_path, batch_size=2, device="cuda",n_classes = n_classes)
