@@ -3,7 +3,6 @@ import torchvision.transforms as transforms
 import torch
 import torchaudio
 import torch
-from torch_audiomentations import Compose, Gain, PolarityInversion, AddBackgroundNoise, TimeInversion, Shift, PitchShift
 import os
 from source.utils.config_manager import ConfigManager
 
@@ -18,8 +17,9 @@ def get_trans_spect_aug(new_freq = 8000,time_mask_param=10,freq_mask_param = 10)
         torchaudio.transforms.FrequencyMasking(freq_mask_param=freq_mask_param)
         )])
 
-def get_trans_spect_mel():
+def get_trans_spect_mel(new_freq=16_000):
     return transforms.Compose([
+        torchaudio.transforms.Resample(new_freq=new_freq),
         transforms_audio.MelSpectrogram(n_fft=512, hop_length=128, n_mels=90)
     ])
 
@@ -39,9 +39,7 @@ def get_transform_raw(p=0.2, sample_rate=16_000):
     noise_files = ('doing_the_dishes.wav', "dude_miaowing.wav", "exercise_bike.wav", "pink_noise.wav", "running_tap.wav", "white_noise.wav")
 
     noise_paths = [os.path.join(noise_path, p) for p in noise_files]
-    return Compose(
-       
-        transforms = [
+    return  [
             #AddBackgroundNoise(p=p, sample_rate=sample_rate, background_paths=noise_paths),
             #Gain(
             #     min_gain_in_db=-15.0,
@@ -51,11 +49,11 @@ def get_transform_raw(p=0.2, sample_rate=16_000):
             # ),
             #TimeInversion(p=p, sample_rate=sample_rate),
             #PolarityInversion(p=p, sample_rate=sample_rate),
-            PitchShift(p=p, sample_rate=sample_rate),
-            Shift(p=p, sample_rate=sample_rate),
+            # PitchShift(p=p, sample_rate=sample_rate),
+            # Shift(p=p, sample_rate=sample_rate),
             transforms_audio.MelSpectrogram(n_fft=512, hop_length=128, n_mels=90)
         ]
-    )
+    
 
 
 class AudioTrainTrasformersFactory:
@@ -64,16 +62,13 @@ class AudioTrainTrasformersFactory:
     def get_train_transformer_spectogram():
         return transforms.Compose([transforms_audio.Resample(new_freq=8_000), transforms_audio.Spectrogram()])
 
-
     @staticmethod  
-
     def get_transformer_spectogram_aug(new_freq=8000,time_mask_param = 10,freq_mask_param = 50):
         return get_trans_spect_aug(new_freq,time_mask_param,freq_mask_param)
 
-
     @staticmethod
-    def get_train_transformer_spectogram_mel():
-        return get_trans_spect_mel()
+    def get_train_transformer_spectogram_mel(new_freq=16_000):
+        return get_trans_spect_mel(new_freq)
         
     @staticmethod
     def get_train_transfomer_spectogram_mel_aug():
@@ -100,8 +95,8 @@ class AudioTestTrasformersFactory:
 
 
     @staticmethod
-    def get_test_transformer_spectogram_mel():
-        return get_trans_spect_mel()
+    def get_test_transformer_spectogram_mel(new_freq=16_000):
+        return get_trans_spect_mel(new_freq)
 
     @staticmethod
     def get_test_transfomer_spectogram_mel_aug():
