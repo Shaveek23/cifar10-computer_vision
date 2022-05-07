@@ -107,6 +107,25 @@ class Project_2_Dataset(Dataset):
             ]
         return None
 
+    
+    def get_target(self, unknown_class=True):
+        if self.subset == 'testing':
+            print('For test dataset target is unknown.')
+            return []
+        
+        return [(os.path.split(fileid)[-1], self.__get_label(relpath=os.path.relpath(fileid, self._path))) for fileid in self._walker]
+
+
+    def __get_label(self, relpath, unknown_class=True):
+        label, filename = os.path.split(relpath)
+        label = os.path.split(label)[1]
+       
+        if unknown_class == True and label in UNKNOWN_DIRS:
+            label = 'unknown'
+
+        return label
+
+
        
 
     def __getitem__(self, n: int) -> Tuple[Tensor, int]:
