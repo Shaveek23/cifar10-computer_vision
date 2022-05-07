@@ -4,7 +4,7 @@ from source.custom_cnn.project2.VGGLikeParametrized import VGGLikeParametrized
 from source.audiotransformers import AudioTrainTrasformersFactory, AudioTestTrasformersFactory
 from source.project2.training_scripts import project2_tune, PROJECT2MODE
 
-for n_classes in [10, 12, 31]:
+for n_classes in [31, 12, 10]:
     config = {
         'net': [
             {
@@ -41,27 +41,17 @@ for n_classes in [10, 12, 31]:
                 'arguments': {
 
                 }
-            },
-            {
-                'type': {
-                    'train': AudioTrainTrasformersFactory.get_train_asteroid_transformer,
-                    'test': AudioTestTrasformersFactory.get_test_asteroid_transformer
-                },
-                'arguments': {
-                    'p': [0.1, 0.2, 0.5],
-                    'sr': [8_000, 16_000]
-                }
             }
         ],
-        'batch_size': [32, 64]
+        'batch_size': [32, 64, 128]
     }
 
     criterion = torch.nn.CrossEntropyLoss()
     
     if n_classes == 31:
-        project2_tune(config, criterion, device='cuda', n_trials=20, trial_name=f'conv2d_nclass_{n_classes}', n_epochs=50, mode=PROJECT2MODE.ONE_VS_ONE, n_classes=n_classes)
+        project2_tune(config, criterion, device='cuda', n_trials=10, trial_name=f'conv2d_noaug_nclass_{n_classes}', n_epochs=50, mode=PROJECT2MODE.ONE_VS_ONE, n_classes=n_classes)
     else:
-        project2_tune(config, criterion, device='cuda', n_trials=10, trial_name=f'conv2d_nclass_{n_classes}', n_epochs=30, mode=PROJECT2MODE.ONE_VS_ONE, n_classes=n_classes)
+        project2_tune(config, criterion, device='cuda', n_trials=10, trial_name=f'conv2d_noaug_nclass_{n_classes}', n_epochs=30, mode=PROJECT2MODE.ONE_VS_ONE, n_classes=n_classes)
 
 
 
