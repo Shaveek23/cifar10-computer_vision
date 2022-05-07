@@ -3,13 +3,14 @@ from source.dataloaders.data_loaders_factory import DataLoaderFactory
 import torch
 import torchaudio
 import os
+from source.utils.config_manager import ConfigManager
 
 from source.dataloaders.project_2_dataset import Project_2_Dataset
 
 class Project2DataLoaderFactory(DataLoaderFactory):
 
     def __init__(self, dataset_path, transform_train: torch.nn.Sequential = None, transform_test: torch.nn.Sequential = None,
-        with_silence: Boolean = True, with_unknown: Boolean = True, is_balanced=False, labels=None):
+        with_silence: Boolean = True, with_unknown: Boolean = True, is_balanced=False, labels=None, no_workers=4, no_workers_eden=16):
         super().__init__(dataset_path)
         self.train_transformer = transform_train
         self.test_transfomer = transform_test
@@ -17,6 +18,11 @@ class Project2DataLoaderFactory(DataLoaderFactory):
         self.with_unknown = with_unknown
         self.is_balanced = is_balanced
         self.labels = labels
+
+        if ConfigManager.is_eden():
+            self.no_workers = no_workers_eden
+        else: 
+            self.no_workers = no_workers
 
 
     def __str__(self):
@@ -29,7 +35,7 @@ class Project2DataLoaderFactory(DataLoaderFactory):
 
         if self.is_balanced:
             sampler = self.__get_sampler_to_balance_classes(self.train_ds)
-            return torch.utils.data.DataLoader(self.train_ds, batch_size, shuffle=False, drop_last=True, sampler=sampler)
+            return torch.utils.data.DataLoader(self.train_ds, batch_size, shuffle=False, drop_last=True, sampler=sampler, num_workers=self.no_workers)
 
         return torch.utils.data.DataLoader(self.train_ds, batch_size, shuffle=True, drop_last=True)
 
@@ -41,13 +47,13 @@ class Project2DataLoaderFactory(DataLoaderFactory):
     def get_valid_loader(self, batch_size: int):
         self.__load_valid_data(
             self.dataset_path, self.test_transfomer)
-        return torch.utils.data.DataLoader(self.valid_ds, batch_size, shuffle=False, drop_last=True)
+        return torch.utils.data.DataLoader(self.valid_ds, batch_size, shuffle=False, drop_last=True, num_workers=self.no_workers)
 
 
     def get_test_loader(self, batch_size: int):
         self.__load_test_data(
             self.dataset_path, self.test_transfomer)
-        return torch.utils.data.DataLoader(self.test_ds, batch_size, shuffle=False, drop_last=False)
+        return torch.utils.data.DataLoader(self.test_ds, batch_size, shuffle=False, drop_last=False, num_workers=self.no_workers)
 
 
     def __load_train_data(self, data_dir: str, transform_train: torch.nn.Sequential):

@@ -166,7 +166,12 @@ class Project_2_Dataset(Dataset):
 
     def __transform(self, waveform: Tensor, sample_rate: int) -> Tuple[Tensor, int]:
 
-        waveform = self._transform(waveform)
+        if hasattr(self._transform, 'transforms'):
+            waveform = waveform.expand(1, *waveform.shape)
+            waveform = self._transform(waveform)
+            waveform = waveform.squeeze(dim=0)
+        else:
+            waveform = self._transform(waveform)
         return waveform, sample_rate
 
 
