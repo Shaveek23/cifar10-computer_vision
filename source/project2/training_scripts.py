@@ -387,29 +387,29 @@ def predict_words(model, tokenizer, data):
             transcription = 'silence'
         result.append(transcription)
     return result
+
+
 def get_confusion_matrix(path, final_model, unknown_model, silence_model, test_transform, device, n_classes=None):
 
     res = predict_all(final_model, unknown_model, silence_model, test_transform, 1, device, n_classes, is_valid_dataset=True)
-
-    dataset_path = ConfigManager().get_dataset_path('speech_recognition')
-
-    if n_classes == 31 or n_classes == 30:
-        labels = {'yes': 0, 'no': 1, 'up': 2, 'down': 3, 'left': 4, 'right': 5,
-                    'on': 6, 'off': 7, 'stop': 8, 'go': 9, 'zero': 10, 'one': 11, 'two': 12, 'three': 13, 'four': 14, 'five': 15, 'six': 16, 'seven': 17, 'eight': 18, 'nine': 19,
-                    'happy': 20, 'house': 21, 'cat': 22, 'wow': 23, 'marvin':24, 'bird': 25, 'bed': 26, 'tree': 27, 'dog': 28, 'sheila': 29, 'silence': 30 }
-        valid_loader = Project2DataLoaderFactory(dataset_path, None, test_transform, with_silence=True, with_unknown=True, labels=labels).get_valid_loader(1)
     
-    else:
-        valid_loader =  Project2DataLoaderFactory(dataset_path, None, test_transform, with_silence=True, with_unknown=True).get_valid_loader(1)
+    dataset_path = ConfigManager().get_dataset_path('speech_recognition')
+    
+    valid_loader =  Project2DataLoaderFactory(dataset_path, None, test_transform, with_silence=True, with_unknown=True).get_valid_loader(1)
 
     y_true = valid_loader.dataset.get_target()
 
     y_true = [x[1] for x in y_true]
+    UNKNOWN_DIRS = ["bed", "bird", "cat", "dog", "eight", "five", "four", "happy", "house", "marvin", "nine", "one", "seven", "sheila", "six", "three", "tree", "two", "wow", "zero"]
+
     y_pred = [x[1] for x in res]
+    y_pred = ['unknown' if x in UNKNOWN_DIRS else x for x in y_pred]
 
     disp_labels = np.unique(y_true)
 
     save_confusion_matrix(path, y_true, y_pred, disp_labels)
+
+    return y_true, y_pred
 
 
 

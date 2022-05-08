@@ -17,6 +17,7 @@ def save_confusion_matrix(path: str, y_true: ndarray, y_pred: ndarray, display_l
     # disp.figure_.savefig(os.path.join(path, 'conf_mat.png'), dpi=300)
 
     fig = plot_confusion_matrix(cm, display_labels, 'Confusion matrix')
+    fig.show()
     fig.write_image(os.path.join(path, 'conf_mat.png'))
 
 
@@ -41,8 +42,8 @@ def plot_confusion_matrix(cm, labels, title):
             )
     layout = {
         "title": title,
-        "xaxis": {"title": "Predicted label"},
-        "yaxis": {"title": "Real label"},
+        "xaxis": {"title": "Real label"},
+        "yaxis": {"title": "Predicted label"},
         "annotations": annotations
     }
     fig = go.Figure(data=data, layout=layout)
