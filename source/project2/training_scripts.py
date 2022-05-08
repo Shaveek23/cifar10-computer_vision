@@ -155,7 +155,7 @@ def predict_known_vs_unknown(model_binary_classifier, test_transform, batch_size
 
 
 
-def predict_all(final_model, unknown_model, silence_model, test_transform, batch_size, device, n_class=None, is_valid_dataset=False):
+def predict_all(final_model, unknown_model, silence_model, test_transform_silence,test_transform_unknown,test_transform_final, batch_size, device, n_class=None, is_valid_dataset=False):
     
     mapping = {0:'yes', 1:'no', 2:'up', 3:'down', 4:'left', 5:'right',
                 6:'on', 7:'off', 8:'stop', 9:'go' }
@@ -204,7 +204,7 @@ def predict_all(final_model, unknown_model, silence_model, test_transform, batch
     if silence_model is not None:
 
 
-        predicts, filenames = predict_silence_vs_rest(silence_model, test_transform, batch_size, device, is_valid_dataset)
+        predicts, filenames = predict_silence_vs_rest(silence_model, test_transform_silence, batch_size, device, is_valid_dataset)
         
         silence_filepaths = np.array(filenames)[np.where(np.array(predicts) == 0)[0]]
 
@@ -215,7 +215,7 @@ def predict_all(final_model, unknown_model, silence_model, test_transform, batch
 
     if unknown_model is not None:
 
-        predicts, filenames = predict_known_vs_unknown(unknown_model, test_transform, batch_size, device, filepath_rest, is_valid_dataset)
+        predicts, filenames = predict_known_vs_unknown(unknown_model, test_transform_unknown, batch_size, device, filepath_rest, is_valid_dataset)
         unknown_filepaths = np.array(filenames)[np.where(np.array(predicts) == 0)[0]]
         unknown_filenames = [os.path.split(s)[-1] for s in unknown_filepaths]
         labels = ['unknown'] * len(unknown_filenames)
@@ -223,7 +223,7 @@ def predict_all(final_model, unknown_model, silence_model, test_transform, batch
         save_prelabeled(filepath_rest, files=unknown_filepaths)
 
 
-    predicts, filepaths = predict_one_vs_one(final_model, test_transform, batch_size, device, filepath_rest, is_valid_dataset)
+    predicts, filepaths = predict_one_vs_one(final_model, test_transform_final, batch_size, device, filepath_rest, is_valid_dataset)
     filenames = [os.path.split(s)[-1] for s in filepaths]
     predicts = np.vectorize(mapping.get)(np.array(predicts))
     results += list(zip(filenames, predicts))
@@ -387,6 +387,7 @@ def predict_words(model, tokenizer, data):
             transcription = 'silence'
         result.append(transcription)
     return result
+<<<<<<< HEAD
 
 
 def get_confusion_matrix(path, final_model, unknown_model, silence_model, test_transform, device, n_classes=None):
@@ -396,6 +397,22 @@ def get_confusion_matrix(path, final_model, unknown_model, silence_model, test_t
     dataset_path = ConfigManager().get_dataset_path('speech_recognition')
     
     valid_loader =  Project2DataLoaderFactory(dataset_path, None, test_transform, with_silence=True, with_unknown=True).get_valid_loader(1)
+=======
+def get_confusion_matrix(path, final_model, unknown_model, silence_model, test_transform_silence,test_transform_unknown,test_transform_final, device, n_classes=None):
+
+    res = predict_all(final_model, unknown_model, silence_model, test_transform_silence,test_transform_unknown,test_transform_final, 1, device, n_classes, is_valid_dataset=True)
+
+    dataset_path = ConfigManager().get_dataset_path('speech_recognition')
+
+    if n_classes == 31 or n_classes == 30:
+        labels = {'yes': 0, 'no': 1, 'up': 2, 'down': 3, 'left': 4, 'right': 5,
+                    'on': 6, 'off': 7, 'stop': 8, 'go': 9, 'zero': 10, 'one': 11, 'two': 12, 'three': 13, 'four': 14, 'five': 15, 'six': 16, 'seven': 17, 'eight': 18, 'nine': 19,
+                    'happy': 20, 'house': 21, 'cat': 22, 'wow': 23, 'marvin':24, 'bird': 25, 'bed': 26, 'tree': 27, 'dog': 28, 'sheila': 29, 'silence': 30 }
+        valid_loader = Project2DataLoaderFactory(dataset_path, None, test_transform_final, with_silence=True, with_unknown=True, labels=labels).get_valid_loader(1)
+    
+    else:
+        valid_loader =  Project2DataLoaderFactory(dataset_path, None, test_transform_final, with_silence=True, with_unknown=True).get_valid_loader(1)
+>>>>>>> 6db6df141f912a802f9447e2080469881f56c8c1
 
     y_true = valid_loader.dataset.get_target()
 
