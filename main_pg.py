@@ -5,49 +5,11 @@ from source.audiotransformers import AudioTrainTrasformersFactory, AudioTestTras
 from source.project2.training_scripts import project2_tune, PROJECT2MODE, train_one_vs_one
 
 
-for n_classes in [12, 31]:
-    config = {
-        'net': [
-            {
-                'type': VGGLikeParametrized,
-                'arguments': {
-                    'p_last_droput': [0.2, 0.3, 0.4, 0.5],
-                    'n_output': [n_classes] # in [] !!!
-                }
-            },
-            {
-                'type': VGGLike,
-                'arguments': {
-                    'n_output': [n_classes] # in [] !!!
-                }
-            }
-        ],
-        'optimizer': [
-            {
-                'type': torch.optim.Adam,
-                'arguments': {
-                    'lr': [0.1, 0.01, 0.05, 0.001],
-                    'weight_decay': [0, 0.001, 0.01]
-                }
-            }
-        ],
-        'transform': [
-            {
-                'type': {
-                    'train': AudioTrainTrasformersFactory.get_train_transformer_spectogram_mel,
-                    'test': AudioTrainTrasformersFactory.get_train_transformer_spectogram_mel,
+model = VGGLikeParametrized(n_output=31, p_last_droput=0.3)
+opt = torch.optim.Adam(model.parameters(), lr=0.001)
+criterion = torch.nn.CrossEntropyLoss()
+train_transform  = AudioTrainTrasformersFactory.get_train_transformer_spectogram_mel()
+test_transform = AudioTestTrasformersFactory.get_test_transformer_spectogram_mel()
 
-                },
-                'arguments': {
-                    'new_freq': [8_000, 16_000]
-                }
-            }
-        ],
-        'batch_size': [32, 64, 128]
-    }
-
-    criterion = torch.nn.CrossEntropyLoss()
-
-    project2_tune(config, criterion, 'cuda', 10, f'VGG_{n_classes}_noaug', n_epochs=100, mode=PROJECT2MODE.ONE_VS_ONE, n_classes=n_classes)
-    
+train_one_vs_one(31, model, opt, criterion, train_transform, test_transform, batch_size=32, n_epochs=100, device='cuda', trial_name='conv2d_31_vgglikeparametrized_p03')
     
