@@ -8,3 +8,4 @@ class LabelMapper():
         ['airplane','automobile','bird','cat','deer',
         'dog','frog','horse','ship','truck']))
         return result_mapper
+ 

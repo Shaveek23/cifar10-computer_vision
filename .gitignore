@@ -1,6 +1,7 @@
 data/
 custom_cnn/__pycache__/
 tuning_results/
+checkpoints/
 
 
 # Byte-compiled / optimized / DLL files
