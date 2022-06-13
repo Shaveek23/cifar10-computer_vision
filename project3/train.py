@@ -14,6 +14,7 @@ from source.utils.data_loading import get_data
 from source.utils.data_loading import get_data
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import numpy as np
 
 real_label = 1.
 fake_label = 0.
@@ -42,14 +43,6 @@ def fit(modelG, modelD, train_loader, optimizerG, optimizerD, criterion, fixed_n
     return modelG, modelD, history, img_list
 
 
-# def generate_checkpoint_path(trial_name=None):
-#     base_path = ConfigManager().get_checkpoints_path()
-#     if trial_name is not None:
-#         dir_name = f'result_{trial_name}_{ConfigManager().get_now()}'
-#     else:
-#         dir_name = f'result_{ConfigManager().get_now()}'
-#     return os.path.join(base_path, dir_name)
-
 def epoch_step(modelG, modelD, train_loader, optimizerG, optimizerD, criterion, epoch, device="cpu"):
 
     # Training Phase
@@ -72,8 +65,7 @@ def __get_epochs_results(G_losses, D_losses):
 def _epoch_end(epoch, result):
     print(result)
     print("Epoch :", epoch + 1)
-    # print(f'Generator losses :{result["G_losses"]:.2f}')
-    # print(f'Discriminator losses :{result["D_losses"]:.2f}')
+
 
 
 def _train(modelG, modelD, train_loader, optimizerG, optimizerD, criterion, device):
@@ -90,9 +82,8 @@ def _train(modelG, modelD, train_loader, optimizerG, optimizerD, criterion, devi
         # Format batch
         real_cpu = data[0].to(device)
         b_size = real_cpu.size(0)
-        label = torch.full((b_size,), real_label,
-                           dtype=torch.float, device=device)
-
+        label = torch.full((b_size,), real_label ,
+                           dtype=torch.float, device=device) + torch.FloatTensor((b_size,)).uniform_(-0.2,0.2)
         # Forward pass real batch through D
         output = modelD(real_cpu).view(-1)
         # Calculate loss on all-real batch

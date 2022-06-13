@@ -5,6 +5,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision.utils as vutils
 import matplotlib.pyplot as plt
+from project3.interpolate import get_random_interpolation, get_interpolated_concat
+from torchvision.utils import save_image
 
 import sys
 import numpy as np
@@ -57,8 +59,17 @@ class Generator (nn.Module):
         plt.axis("off")
         plt.imshow(np.transpose(gen_img, (1, 2, 0)))
         plt.show()
+        
     def save(self,folder):
         torch.save(self.state_dict(), os.path.join(folder,'generator'))
+
+    def interpolate(self, folder_name):
+        vectors = get_random_interpolation(vector_size=self.nz, n_vecs=10)
+        for i,vec in enumerate(vectors):
+            image = self(vec).detach().cpu()
+            save_image(image, f"{folder_name}/im{i}.png")
+        get_interpolated_concat(im_path=folder_name)
+
 
 
 class Discriminator(nn.Module):
